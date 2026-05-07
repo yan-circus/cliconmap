@@ -44,7 +44,7 @@ body[data-theme="tresor"] {
   --text:         #f0ddb0;
   --text-dim:     #a08050;
   --ocean:        #000000;
-  --country-fill: #c8a060;
+  --country-fill: #cd8e29;
   --hover-fill:   #e8b030;
   --correct:      #5a9040;
   --wrong:        #b03020;
@@ -424,6 +424,8 @@ body.touch-dragging .country:hover { fill: var(--c-fill, var(--country-fill)) !i
   cursor: default;
 }
 .country.inactive:hover { fill: #777; }
+body[data-theme="tresor"] .country.inactive,
+body[data-theme="tresor"] .country.inactive:hover { fill: #6c4924; }
 
 /* Wrong-reveal : assombrit tous les pays sauf correct (vert) et wrong (rouge) */
 body.wrong-reveal .country:not(.correct):not(.wrong):not(.small-marker):not(.inactive) { fill: #4d4d4d !important; }

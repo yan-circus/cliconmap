@@ -108,7 +108,7 @@ const THEMES = {
   tresor: {
     '--bg':           '#1e1006', '--surface':      '#2e1a08', '--accent':       '#7a4a15',
     '--text':         '#f0ddb0', '--text-dim':     '#d4b880', '--ocean':        '#000000',
-    '--country-fill': '#c8a060', '--hover-fill':   '#e8b030', '--correct':      '#5a9040',
+    '--country-fill': '#cd8e29', '--hover-fill':   '#e8b030', '--correct':      '#5a9040',
     '--wrong':        '#b03020', '--selected-fill':'#d4801a', '--radius-btn':   '6px',
     '--h1-font':      "Georgia, 'Times New Roman', serif",
   },
@@ -255,6 +255,8 @@ async function init() {
     countryPaths[id].push(path);
     path.classList.add('country');
     path.dataset.countryId = id;
+    path.style.removeProperty('fill');
+    path.style.removeProperty('fill-opacity');
     path.addEventListener('click', onPathClick);
   }
 
