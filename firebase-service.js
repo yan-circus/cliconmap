@@ -19,8 +19,8 @@ const LEVEL_IDS = {
   monde: 1, Europe: 2, UE: 3, Afrique: 4, Asie: 5, Amérique: 6, Océanie: 7,
 };
 
-const GAME_TYPE_CHRONO = 1;  // "Classique" avec timer
-const GAME_TYPE_LIBRE  = 2;  // "Sans chrono"
+const GAME_TYPE_CHRONO = 1;
+const GAME_TYPE_LIBRE  = 2;
 const DIFFICULTY       = 1;
 
 let _currentUser = null;
@@ -32,23 +32,53 @@ auth.onAuthStateChanged(user => {
   }
 });
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function _newProfileId() {
+  return db.collection('profiles').doc().id;
+}
+
+async function _createSelfProfile(uid, prenom, nom, avatarId, skinId = 1) {
+  const profileId = _newProfileId();
+  const now = new Date().toISOString();
+  await db.collection('profiles').doc(profileId).set({
+    prenom,
+    nom,
+    avatar_id:      avatarId,
+    skin_id:        skinId,
+    is_supervisor:  true,
+    linked_uid:     uid,
+    owner_uid:      uid,
+    supervisors:    { [uid]: 'owner' },
+    grade:          null,
+    class_id:       null,
+    created_at:     now,
+  });
+  return profileId;
+}
+
+// ─── Auth ─────────────────────────────────────────────────────────────────────
+
 window.firebaseService = {
   getUser: () => _currentUser,
 
-  signUp: async (email, password, firstName, lastName, avatarId = 1) => {
+  signUp: async (email, password, prenom, nom, avatarId = 1) => {
     const cred = await auth.createUserWithEmailAndPassword(email, password);
-    await cred.user.updateProfile({ displayName: firstName });
-    await db.collection('users').doc(cred.user.uid).set({
-      uuid:       cred.user.uid,
-      first_name: firstName,
-      last_name:  lastName,
-      mail:       email,
-      role_id:    'player',
-      color:      0,
-      skin_id:    1,
-      avatar_id:  avatarId,
-      date:       new Date().toISOString(),
+    const uid  = cred.user.uid;
+    await cred.user.updateProfile({ displayName: prenom });
+
+    const profileId = await _createSelfProfile(uid, prenom, nom, avatarId);
+
+    await db.collection('users').doc(uid).set({
+      uid,
+      email,
+      prenom,
+      nom,
+      role:        'solo',
+      profile_ids: [profileId],
+      created_at:  new Date().toISOString(),
     });
+
     return cred.user;
   },
 
@@ -58,25 +88,185 @@ window.firebaseService = {
 
   signInWithGoogle: async () => {
     const provider = new firebase.auth.GoogleAuthProvider();
-    const cred = await auth.signInWithPopup(provider);
-    const userRef = db.collection('users').doc(cred.user.uid);
+    const cred     = await auth.signInWithPopup(provider);
+    const uid      = cred.user.uid;
+    const userRef  = db.collection('users').doc(uid);
     const existing = await userRef.get();
+
     if (!existing.exists) {
-      const nameParts = (cred.user.displayName || '').split(' ');
+      const parts  = (cred.user.displayName || '').split(' ');
+      const prenom = parts[0] || '';
+      const nom    = parts.slice(1).join(' ') || '';
+
+      const profileId = await _createSelfProfile(uid, prenom, nom, 1);
+
       await userRef.set({
-        uuid:       cred.user.uid,
-        first_name: nameParts[0] || '',
-        last_name:  nameParts.slice(1).join(' ') || '',
-        mail:       cred.user.email || '',
-        role_id:    'player',
-        color:      0,
-        skin_id:    1,
-        date:       new Date().toISOString(),
-        avatar:     cred.user.photoURL || '',
+        uid,
+        email:       cred.user.email || '',
+        prenom,
+        nom,
+        role:        'solo',
+        profile_ids: [profileId],
+        created_at:  new Date().toISOString(),
       });
     }
+
     return cred.user;
   },
+
+  // ─── Profils ───────────────────────────────────────────────────────────────
+
+  getProfiles: async () => {
+    if (!_currentUser) return [];
+    const userDoc = await db.collection('users').doc(_currentUser.uid).get();
+    if (!userDoc.exists) return [];
+    const ids = userDoc.data().profile_ids || [];
+    if (ids.length === 0) return [];
+    const snaps = await Promise.all(ids.map(id => db.collection('profiles').doc(id).get()));
+    return snaps
+      .filter(s => s.exists)
+      .map(s => ({ id: s.id, ...s.data() }));
+  },
+
+  createChildProfile: async (prenom, nom, avatarId = 1) => {
+    if (!_currentUser) return null;
+    const uid       = _currentUser.uid;
+    const profileId = _newProfileId();
+    const now       = new Date().toISOString();
+
+    await db.collection('profiles').doc(profileId).set({
+      prenom,
+      nom,
+      avatar_id:     avatarId,
+      skin_id:       1,
+      is_supervisor: false,
+      linked_uid:    null,
+      owner_uid:     uid,
+      supervisors:   { [uid]: 'parent' },
+      grade:         null,
+      class_id:      null,
+      created_at:    now,
+    });
+
+    await db.collection('users').doc(uid).update({
+      profile_ids: firebase.firestore.FieldValue.arrayUnion(profileId),
+      role:        'parent',
+    });
+
+    return profileId;
+  },
+
+  deleteChildProfile: async (profileId) => {
+    if (!_currentUser) return;
+    await db.collection('profiles').doc(profileId).delete();
+    await db.collection('users').doc(_currentUser.uid).update({
+      profile_ids: firebase.firestore.FieldValue.arrayRemove(profileId),
+    });
+  },
+
+  getProfileById: async (profileId) => {
+    const doc = await db.collection('profiles').doc(profileId).get();
+    return doc.exists ? { id: doc.id, ...doc.data() } : null;
+  },
+
+  updateProfileAvatar: (profileId, avatarId) => {
+    if (!_currentUser) return Promise.resolve();
+    return db.collection('profiles').doc(profileId).update({ avatar_id: avatarId });
+  },
+
+  updateProfileSkin: (profileId, skinId) => {
+    if (!_currentUser) return Promise.resolve();
+    return db.collection('profiles').doc(profileId).update({ skin_id: skinId });
+  },
+
+  // ─── Compte superviseur ────────────────────────────────────────────────────
+
+  getSupervisorProvider: () => {
+    if (!_currentUser) return null;
+    return _currentUser.providerData[0]?.providerId || null;
+  },
+
+  reauthWithPassword: async (password) => {
+    const credential = firebase.auth.EmailAuthProvider.credential(
+      _currentUser.email, password
+    );
+    return _currentUser.reauthenticateWithCredential(credential);
+  },
+
+  reauthWithGoogle: async () => {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    return _currentUser.reauthenticateWithPopup(provider);
+  },
+
+  getUserAccount: async () => {
+    if (!_currentUser) return null;
+    const doc = await db.collection('users').doc(_currentUser.uid).get();
+    return doc.exists ? { id: doc.id, ...doc.data() } : null;
+  },
+
+  // ─── Scores & progression ─────────────────────────────────────────────────
+
+  saveGame: async (profileId, { levelKey, timerEnabled, score, timeMs, won, poolSize, displayName }) => {
+    if (!_currentUser || !profileId) return;
+    const levelId    = LEVEL_IDS[levelKey] ?? 1;
+    const gameTypeId = timerEnabled ? GAME_TYPE_CHRONO : GAME_TYPE_LIBRE;
+    const maxScore   = poolSize * 1000;
+    const ratio      = maxScore > 0 ? score / maxScore : 0;
+    const stars      = !won ? 0 : ratio >= 0.7 ? 3 : ratio >= 0.4 ? 2 : 1;
+    const now        = new Date().toISOString();
+
+    const profileRef = db.collection('profiles').doc(profileId);
+
+    await profileRef.collection('save_games').add({
+      game_id:         1,
+      game_type_id:    gameTypeId,
+      level_id:        levelId,
+      difficulty:      DIFFICULTY,
+      score,
+      time_ms:         timeMs,
+      is_completed:    won,
+      stars_collected: stars,
+      items_collected: [],
+      played_at:       now,
+    });
+
+    const progressKey = `${levelId}_${gameTypeId}_${DIFFICULTY}`;
+    const progressRef = profileRef.collection('progress').doc(progressKey);
+    const existing    = await progressRef.get();
+    if (!existing.exists || score > existing.data().score) {
+      await progressRef.set({
+        level_id:     levelId,
+        game_type_id: gameTypeId,
+        difficulty:   DIFFICULTY,
+        score,
+        best_time:    timeMs,
+        stars,
+        completed:    won,
+        display_name: displayName || '',
+        date:         now,
+        updated_at:   now,
+      });
+    }
+  },
+
+  getMyScores: async (profileId) => {
+    if (!profileId) return [];
+    const snap = await db.collection('profiles').doc(profileId)
+      .collection('progress').get();
+    return snap.docs.map(d => d.data());
+  },
+
+  getLevelLeaderboard: async (levelId) => {
+    // Récupère les meilleurs scores tous profils confondus pour un niveau
+    const snap = await db.collectionGroup('progress')
+      .where('level_id', '==', levelId)
+      .orderBy('score', 'desc')
+      .limit(10)
+      .get();
+    return snap.docs.map(d => d.data());
+  },
+
+  // ─── Seed ─────────────────────────────────────────────────────────────────
 
   seedDatabase: async () => {
     const existing = await db.collection('games').doc('1').get();
@@ -86,160 +276,46 @@ window.firebaseService = {
     }
 
     const FAMILY_UUID = 'a1b2c3d4-0001-4000-8000-cliconmap0001';
-    const now = new Date().toISOString();
-    const batch = db.batch();
+    const now         = new Date().toISOString();
+    const batch       = db.batch();
 
-    // games
     batch.set(db.collection('games').doc('1'), {
-      id:          1,
-      name:        'Clic on Map',
+      id: 1, name: 'Clic on Map',
       description: 'Jeu de géographie — trouvez les pays sur la carte du monde',
-      version:     '1.0',
+      version: '1.0',
     });
 
-    // game_types
-    batch.set(db.collection('game_types').doc('1'), {
-      id: 1, game_id: 1,
-      name:  'Classique',
-      notes: 'Avec chrono — répondez vite pour plus de points',
-    });
-    batch.set(db.collection('game_types').doc('2'), {
-      id: 2, game_id: 1,
-      name:  'Sans chrono',
-      notes: 'Prenez votre temps, aucune pénalité de temps',
-    });
+    batch.set(db.collection('game_types').doc('1'), { id: 1, game_id: 1, name: 'Classique',   notes: 'Avec chrono' });
+    batch.set(db.collection('game_types').doc('2'), { id: 2, game_id: 1, name: 'Sans chrono', notes: 'Sans pénalité de temps' });
 
-    // level_families
     batch.set(db.collection('level_families').doc('1'), {
-      id:      1,
-      uuid:    FAMILY_UUID,
-      game_id: 1,
-      name:    'Carte du monde',
-      notes:   'Planisphère SVG — tous les pays reconnus',
-      date:    now,
-      author:  'system',
+      id: 1, uuid: FAMILY_UUID, game_id: 1,
+      name: 'Carte du monde', notes: 'Planisphère SVG', date: now, author: 'system',
     });
 
-    // levels  (name = valeur du select dans le jeu)
     const LEVELS = [
-      { id: 1, name: 'monde',    title: 'Monde entier',     notes: 'Tous les pays du monde' },
-      { id: 2, name: 'Europe',   title: 'Europe',           notes: 'Pays du continent européen' },
-      { id: 3, name: 'UE',       title: 'Union Européenne', notes: 'Les 27 membres de l\'UE' },
-      { id: 4, name: 'Afrique',  title: 'Afrique',          notes: 'Pays du continent africain' },
-      { id: 5, name: 'Asie',     title: 'Asie',             notes: 'Pays du continent asiatique' },
-      { id: 6, name: 'Amérique', title: 'Amérique',         notes: 'Amérique du Nord et du Sud' },
-      { id: 7, name: 'Océanie',  title: 'Océanie',          notes: 'Pays d\'Océanie' },
+      { id: 1, name: 'monde',    title: 'Monde entier'     },
+      { id: 2, name: 'Europe',   title: 'Europe'           },
+      { id: 3, name: 'UE',       title: 'Union Européenne' },
+      { id: 4, name: 'Afrique',  title: 'Afrique'          },
+      { id: 5, name: 'Asie',     title: 'Asie'             },
+      { id: 6, name: 'Amérique', title: 'Amérique'         },
+      { id: 7, name: 'Océanie',  title: 'Océanie'          },
     ];
+    LEVELS.forEach(lvl => batch.set(db.collection('levels').doc(String(lvl.id)), {
+      id: lvl.id, uuid: `b100000${lvl.id}-0001-4000-8000-cliconmap0001`,
+      game_id: 1, family_id: 1, family_uuid: FAMILY_UUID,
+      name: lvl.name, title: lvl.title, date: now, author: 'system',
+    }));
 
-    LEVELS.forEach(lvl => {
-      batch.set(db.collection('levels').doc(String(lvl.id)), {
-        id:          lvl.id,
-        uuid:        `b100000${lvl.id}-0001-4000-8000-cliconmap0001`,
-        game_id:     1,
-        family_id:   1,
-        family_uuid: FAMILY_UUID,
-        name:        lvl.name,
-        title:       lvl.title,
-        thumb:       '',
-        author:      'system',
-        nb_stars:    3,
-        items:       [],
-        is_lockable: false,
-        date:        now,
-        notes:       lvl.notes,
-      });
-    });
-
-    // skins
     [
-      { id: 1, name: 'Sombre',          notes: 'Thème sombre par défaut' },
-      { id: 2, name: 'Coloré',          notes: 'Thème clair et coloré' },
-      { id: 3, name: 'Carte au trésor', notes: 'Thème vintage' },
-      { id: 4, name: 'Multicolore',     notes: 'Pays multicolores' },
+      { id: 1, name: 'Sombre'          },
+      { id: 2, name: 'Coloré'          },
+      { id: 3, name: 'Carte au trésor' },
+      { id: 4, name: 'Multicolore'     },
     ].forEach(s => batch.set(db.collection('skins').doc(String(s.id)), s));
 
     await batch.commit();
-    console.log('Seed OK — games, game_types, level_families, levels, skins créés dans Firestore.');
-  },
-
-  saveGame: async ({ levelKey, timerEnabled, score, timeMs, won, poolSize }) => {
-    if (!_currentUser) return;
-    const levelId    = LEVEL_IDS[levelKey] ?? 1;
-    const gameTypeId = timerEnabled ? GAME_TYPE_CHRONO : GAME_TYPE_LIBRE;
-    const maxScore   = poolSize * 1000;
-    const ratio      = maxScore > 0 ? score / maxScore : 0;
-    const stars      = !won ? 0 : ratio >= 0.7 ? 3 : ratio >= 0.4 ? 2 : 1;
-    const now        = new Date().toISOString();
-    const userId     = _currentUser.uid;
-
-    await db.collection('save_games').add({
-      date:            now,
-      user_id:         userId,
-      level_id:        levelId,
-      game_type_id:    gameTypeId,
-      difficulty:      DIFFICULTY,
-      score,
-      time_ms:         timeMs,
-      is_completed:    won,
-      items_collected: [],
-      stars_collected: stars,
-    });
-
-    const progressId  = `${userId}_${levelId}_${gameTypeId}_${DIFFICULTY}`;
-    const progressRef = db.collection('user_progress').doc(progressId);
-    const existing    = await progressRef.get();
-    if (!existing.exists || score > existing.data().score) {
-      await progressRef.set({
-        user_id:      userId,
-        display_name: _currentUser.displayName || _currentUser.email.split('@')[0],
-        level_id:     levelId,
-        difficulty:   DIFFICULTY,
-        game_type_id: gameTypeId,
-        score,
-        best_time:    timeMs,
-        stars,
-        completed:    won,
-        date:         now,
-      });
-    }
-  },
-
-  getMyScores: async () => {
-    if (!_currentUser) return [];
-    const snap = await db.collection('user_progress')
-      .where('user_id', '==', _currentUser.uid)
-      .get();
-    return snap.docs.map(d => d.data());
-  },
-
-  getUserProfile: async () => {
-    if (!_currentUser) return null;
-    const doc = await db.collection('users').doc(_currentUser.uid).get();
-    return doc.exists ? doc.data() : null;
-  },
-
-  getUserSkin: async () => {
-    if (!_currentUser) return null;
-    const doc = await db.collection('users').doc(_currentUser.uid).get();
-    return doc.exists ? (doc.data().skin_id || null) : null;
-  },
-
-  updateUserSkin: (skinId) => {
-    if (!_currentUser) return Promise.resolve();
-    return db.collection('users').doc(_currentUser.uid).update({ skin_id: skinId });
-  },
-
-  updateUserAvatar: (avatarId) => {
-    if (!_currentUser) return Promise.resolve();
-    return db.collection('users').doc(_currentUser.uid).update({ avatar_id: avatarId });
-  },
-
-  getLevelLeaderboard: async (levelId) => {
-    const snap = await db.collection('user_progress')
-      .where('level_id', '==', levelId)
-      .get();
-    const docs = snap.docs.map(d => d.data());
-    docs.sort((a, b) => b.score - a.score);
-    return docs.slice(0, 10);
+    console.log('Seed OK.');
   },
 };

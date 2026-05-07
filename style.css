@@ -534,37 +534,113 @@ body[data-timer="off"]     #timer-gauge  { display: none; }
   top: calc(100% + 6px);
   background: var(--surface);
   border: 1px solid var(--accent);
-  border-radius: 8px;
-  padding: 12px 14px;
-  min-width: 170px;
+  border-radius: 10px;
+  padding: 8px 0;
+  min-width: 210px;
   z-index: 300;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
 }
 #user-dropdown.hidden { display: none; }
 
-#dropdown-name {
-  font-size: 0.82rem;
+/* ── Ligne profil ── */
+.profile-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.profile-row:hover { background: rgba(255,255,255,0.07); }
+.profile-row.active-profile { background: rgba(255,255,255,0.1); }
+
+.profile-avatar-wrap {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+}
+.profile-avatar-wrap img {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.crown-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  font-size: 13px;
+  line-height: 1;
+}
+.profile-row-name {
+  flex: 1;
+  font-size: 0.92rem;
+  color: var(--text);
+}
+.profile-gear {
+  background: transparent;
+  border: none;
   color: var(--text-dim);
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--accent);
-  word-break: break-all;
+  font-size: 0.95rem;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+  opacity: 0;
+  transition: opacity 0.15s, background 0.15s;
+}
+.profile-row:hover .profile-gear { opacity: 1; }
+.profile-gear:hover { background: var(--accent); color: var(--text); }
+
+/* ── Séparateur ── */
+.dropdown-separator {
+  height: 1px;
+  background: var(--accent);
+  margin: 6px 0;
+  opacity: 0.4;
 }
 
-#logout-btn {
-  padding: 7px 10px;
-  border-radius: var(--radius-btn);
-  border: 1px solid var(--accent);
+/* ── Compte superviseur ── */
+.dropdown-account-row {
+  display: flex;
+  align-items: center;
+  padding: 6px 14px;
+  gap: 8px;
+}
+#dropdown-email {
+  flex: 1;
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  word-break: break-all;
+}
+.dropdown-gear {
   background: transparent;
-  color: var(--text);
+  border: none;
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+.dropdown-gear:hover { background: var(--accent); color: var(--text); }
+
+/* ── Actions (ajouter / déconnexion) ── */
+.dropdown-action {
+  padding: 7px 14px;
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
   font-size: 0.85rem;
   cursor: pointer;
   text-align: left;
-  transition: background 0.15s;
+  transition: background 0.12s, color 0.12s;
 }
-#logout-btn:hover { background: var(--accent); }
+.dropdown-action:hover { background: rgba(255,255,255,0.07); color: var(--text); }
+.dropdown-logout { color: var(--wrong); }
+.dropdown-logout:hover { background: rgba(176,48,32,0.15); color: var(--wrong); }
 
 /* ── Scores button ── */
 #scores-btn {
@@ -979,18 +1055,98 @@ body[data-timer="off"]     #timer-gauge  { display: none; }
   margin: 0 0 10px;
 }
 
-#user-dropdown #profile-btn {
-  width: 100%;
-  padding: 6px 8px;
-  border: none;
-  background: transparent;
+/* ── Modal ajouter un joueur ── */
+/* ── Dropdown : label action ── */
+.dropdown-action-label {
+  flex: 1;
+  font-size: 0.88rem;
   color: var(--text-dim);
+}
+.profile-row:hover .dropdown-action-label { color: var(--text); }
+.profile-row-lock .dropdown-action-label  { color: var(--accent); opacity: 0.9; }
+
+/* ── Modal superviseur ── */
+#supervisor-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 400;
+}
+#supervisor-overlay.hidden { display: none; }
+#supervisor-panel {
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  border-radius: 12px;
+  padding: 24px;
+  width: min(340px, 92vw);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+#supervisor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+#supervisor-header h2 { margin: 0; font-size: 1.1rem; }
+.supervisor-hint {
   font-size: 0.85rem;
+  color: var(--text-dim);
+  margin: 0 0 8px;
+}
+#supervisor-reauth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+#supervisor-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.supervisor-option {
+  padding: 10px 14px;
+  border-radius: var(--radius-btn);
+  border: 1px solid var(--accent);
+  background: transparent;
+  color: var(--text);
+  font-size: 0.9rem;
   cursor: pointer;
   text-align: left;
-  border-radius: 4px;
+  transition: background 0.15s;
 }
-#user-dropdown #profile-btn:hover { background: var(--accent); color: var(--text); }
+.supervisor-option:hover { background: var(--accent); }
+.supervisor-option-danger { color: var(--wrong); border-color: var(--wrong); }
+.supervisor-option-danger:hover { background: rgba(176,48,32,0.2); }
+
+#add-profile-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 400;
+}
+#add-profile-overlay.hidden { display: none; }
+#add-profile-panel {
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  border-radius: 12px;
+  padding: 24px;
+  width: min(360px, 92vw);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+#add-profile-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+#add-profile-header h2 { margin: 0; font-size: 1.1rem; }
+#add-profile-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
 
 /* ══════════════════════════════════════════════════════════
    SETTINGS MODAL

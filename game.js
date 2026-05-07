@@ -171,6 +171,37 @@ let countryById    = {};   // ISO → country object
 let mode  = 'game';
 let level = 'monde';
 
+// Profil joueur actif
+let currentProfileId   = localStorage.getItem('geo-profile-id') || null;
+let currentProfileData = null;
+
+function showUserAvatar(avatarId) {
+  const avatarImg = document.getElementById('auth-avatar');
+  const authIcon  = document.getElementById('auth-icon');
+  if (avatarId) {
+    avatarImg.src = avatarPath(avatarId);
+    avatarImg.classList.remove('hidden');
+    authIcon.classList.add('hidden');
+  } else {
+    avatarImg.classList.add('hidden');
+    authIcon.classList.remove('hidden');
+  }
+}
+
+function selectProfile(profileId, profileData) {
+  currentProfileId   = profileId;
+  currentProfileData = profileData;
+  if (profileId) {
+    localStorage.setItem('geo-profile-id', profileId);
+  } else {
+    localStorage.removeItem('geo-profile-id');
+  }
+  const display = document.getElementById('user-display');
+  if (display) display.textContent = profileData?.prenom || 'Joueur';
+  if (profileData?.skin_id) applyTheme(SKIN_NAMES[profileData.skin_id] || 'sombre');
+  showUserAvatar(profileData?.avatar_id || null);
+}
+
 // ViewBox state (current)
 let vb = { x: 0, y: 0, w: 2000, h: 857 };
 
@@ -354,7 +385,7 @@ async function init() {
     card.addEventListener('click', () => {
       applyTheme(card.dataset.theme);
       const skinId = SKIN_IDS[card.dataset.theme];
-      if (skinId) window.firebaseService?.updateUserSkin(skinId).catch(console.error);
+      if (skinId && currentProfileId) window.firebaseService?.updateProfileSkin(currentProfileId, skinId).catch(console.error);
     })
   );
 
@@ -383,18 +414,21 @@ async function init() {
     id => { regAvatarId = id; }
   );
 
-  // Profile modal
+  // Profile settings modal (avatar)
   const profileOverlay = document.getElementById('profile-overlay');
 
-  document.getElementById('profile-btn').addEventListener('click', () => {
-    userDropdown.classList.add('hidden');
+  function openProfileSettings(profile) {
+    profileAvatarId = profile.avatar_id || 1;
+    document.querySelector('#profile-panel h2').textContent =
+      `Avatar de ${profile.prenom}`;
     buildAvatarGrid(
       document.getElementById('profile-avatar-picker'),
       profileAvatarId,
       id => { profileAvatarId = id; }
     );
     profileOverlay.classList.remove('hidden');
-  });
+  }
+
   document.getElementById('profile-close').addEventListener('click', () =>
     profileOverlay.classList.add('hidden')
   );
@@ -405,7 +439,8 @@ async function init() {
     const btn = document.getElementById('profile-save');
     btn.disabled = true;
     try {
-      await window.firebaseService.updateUserAvatar(profileAvatarId);
+      await window.firebaseService.updateProfileAvatar(currentProfileId, profileAvatarId);
+      if (currentProfileData) currentProfileData.avatar_id = profileAvatarId;
       showUserAvatar(profileAvatarId);
       profileOverlay.classList.add('hidden');
     } catch (err) {
@@ -415,41 +450,199 @@ async function init() {
     }
   });
 
-  function showUserAvatar(avatarId) {
-    const avatarImg = document.getElementById('auth-avatar');
-    const authIcon  = document.getElementById('auth-icon');
-    if (avatarId) {
-      avatarImg.src = avatarPath(avatarId);
-      avatarImg.classList.remove('hidden');
-      authIcon.classList.add('hidden');
-    } else {
-      avatarImg.classList.add('hidden');
-      authIcon.classList.remove('hidden');
+  // Add player modal
+  const addProfileOverlay = document.getElementById('add-profile-overlay');
+  let addProfileAvatarId  = 1;
+
+  document.getElementById('add-profile-btn').addEventListener('click', () => {
+    supervisorOverlay.classList.add('hidden');
+    addProfileAvatarId = 1;
+    document.getElementById('add-profile-prenom').value = '';
+    document.getElementById('add-profile-nom').value    = '';
+    document.getElementById('add-profile-error').textContent = '';
+    buildAvatarGrid(
+      document.getElementById('add-profile-avatar-picker'),
+      addProfileAvatarId,
+      id => { addProfileAvatarId = id; }
+    );
+    addProfileOverlay.classList.remove('hidden');
+  });
+  document.getElementById('add-profile-close').addEventListener('click', () =>
+    addProfileOverlay.classList.add('hidden')
+  );
+  addProfileOverlay.addEventListener('click', e => {
+    if (e.target === addProfileOverlay) addProfileOverlay.classList.add('hidden');
+  });
+  document.getElementById('add-profile-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const prenom  = document.getElementById('add-profile-prenom').value.trim();
+    const nom     = document.getElementById('add-profile-nom').value.trim();
+    const errorEl = document.getElementById('add-profile-error');
+    errorEl.textContent = '';
+    if (!prenom) { errorEl.textContent = 'Le prénom est requis.'; return; }
+    const btn = document.getElementById('add-profile-submit');
+    btn.disabled = true;
+    try {
+      await window.firebaseService.createChildProfile(prenom, nom, addProfileAvatarId);
+      addProfileOverlay.classList.add('hidden');
+    } catch (err) {
+      errorEl.textContent = 'Erreur lors de la création.';
+      console.error(err);
+    } finally {
+      btn.disabled = false;
     }
-  }
+  });
+
 
   // Auth modal
   const authOverlay  = document.getElementById('auth-overlay');
   const authBtn      = document.getElementById('auth-btn');
   const userDropdown = document.getElementById('user-dropdown');
 
-  authBtn.addEventListener('click', () => {
+  async function renderProfilesDropdown() {
+    const list = document.getElementById('profiles-list');
+    list.innerHTML = '';
+    const profiles = await window.firebaseService.getProfiles();
+    const others   = [...profiles]
+      .filter(p => p.id !== currentProfileId)
+      .sort((a, b) => (b.is_supervisor ? 1 : 0) - (a.is_supervisor ? 1 : 0));
+
+    // Autres joueurs (pas le joueur actif)
+    others.forEach(profile => {
+      const row = document.createElement('div');
+      row.className = 'profile-row';
+      row.innerHTML = `
+        <div class="profile-avatar-wrap">
+          <img src="${avatarPath(profile.avatar_id || 1)}" alt="${profile.prenom}">
+          ${profile.is_supervisor ? '<span class="crown-badge">👑</span>' : ''}
+        </div>
+        <span class="profile-row-name">${profile.prenom}</span>
+      `;
+      row.addEventListener('click', () => {
+        selectProfile(profile.id, profile);
+        profileAvatarId = profile.avatar_id || 1;
+        userDropdown.classList.add('hidden');
+      });
+      list.appendChild(row);
+    });
+
+    // Séparateur + modifier joueur actif
+    if (others.length) {
+      const sep = document.createElement('div');
+      sep.className = 'dropdown-separator';
+      list.appendChild(sep);
+    }
+
+    const editRow = document.createElement('div');
+    editRow.className = 'profile-row';
+    editRow.innerHTML = `<span class="dropdown-action-label">✏ Modifier ${currentProfileData?.prenom || 'le joueur'}</span>`;
+    editRow.addEventListener('click', () => {
+      userDropdown.classList.add('hidden');
+      openProfileSettings(currentProfileData || {});
+    });
+    list.appendChild(editRow);
+
+    // Séparateur + options superviseur (toujours visible, mdp requis)
+    const sep2 = document.createElement('div');
+    sep2.className = 'dropdown-separator';
+    list.appendChild(sep2);
+
+    const lockRow = document.createElement('div');
+    lockRow.className = 'profile-row profile-row-lock';
+    lockRow.innerHTML = `<span class="dropdown-action-label">🔒 Options superviseur</span>`;
+    lockRow.addEventListener('click', () => {
+      userDropdown.classList.add('hidden');
+      openSupervisorOptions();
+    });
+    list.appendChild(lockRow);
+  }
+
+  authBtn.addEventListener('click', async () => {
     if (window.firebaseService?.getUser()) {
-      userDropdown.classList.toggle('hidden');
+      if (userDropdown.classList.contains('hidden')) {
+        await renderProfilesDropdown();
+        userDropdown.classList.remove('hidden');
+      } else {
+        userDropdown.classList.add('hidden');
+      }
     } else {
       authOverlay.classList.remove('hidden');
     }
-  });
-
-  document.getElementById('logout-btn').addEventListener('click', () => {
-    window.firebaseService.signOut().catch(console.error);
-    userDropdown.classList.add('hidden');
   });
 
   document.addEventListener('click', e => {
     if (!document.getElementById('user-area').contains(e.target)) {
       userDropdown.classList.add('hidden');
     }
+  });
+
+  // ── Modal options superviseur ───────────────────────────────
+  const supervisorOverlay = document.getElementById('supervisor-overlay');
+
+  function openSupervisorOptions() {
+    document.getElementById('supervisor-auth').style.display    = '';
+    document.getElementById('supervisor-options').style.display  = 'none';
+    document.getElementById('supervisor-password').value = '';
+    document.getElementById('supervisor-auth-error').textContent = '';
+    // Masquer le bouton Google si compte email/password
+    const provider = window.firebaseService.getSupervisorProvider();
+    document.getElementById('supervisor-google-btn').style.display =
+      provider === 'google.com' ? '' : 'none';
+    supervisorOverlay.classList.remove('hidden');
+  }
+
+  document.getElementById('supervisor-close').addEventListener('click', () =>
+    supervisorOverlay.classList.add('hidden')
+  );
+  supervisorOverlay.addEventListener('click', e => {
+    if (e.target === supervisorOverlay) supervisorOverlay.classList.add('hidden');
+  });
+
+  function unlockSupervisor() {
+    document.getElementById('supervisor-auth').style.display   = 'none';
+    document.getElementById('supervisor-options').style.display = 'flex';
+  }
+
+  document.getElementById('supervisor-reauth-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const password = document.getElementById('supervisor-password').value.trim();
+    const errorEl  = document.getElementById('supervisor-auth-error');
+    errorEl.textContent = '';
+    if (!password) {
+      errorEl.textContent = 'Entrez votre mot de passe.';
+      return;
+    }
+    const btn = document.getElementById('supervisor-reauth-btn');
+    btn.disabled = true;
+    try {
+      await window.firebaseService.reauthWithPassword(password);
+      unlockSupervisor();
+    } catch(err) {
+      errorEl.textContent =
+        err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential'
+          ? 'Mot de passe incorrect.'
+          : 'Erreur d\'authentification.';
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  document.getElementById('supervisor-google-btn').addEventListener('click', async () => {
+    const btn = document.getElementById('supervisor-google-btn');
+    btn.disabled = true;
+    try {
+      await window.firebaseService.reauthWithGoogle();
+      unlockSupervisor();
+    } catch(err) {
+      document.getElementById('supervisor-auth-error').textContent = 'Erreur Google.';
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  document.getElementById('logout-btn').addEventListener('click', () => {
+    supervisorOverlay.classList.add('hidden');
+    window.firebaseService.signOut().catch(console.error);
   });
 
   document.getElementById('auth-close').addEventListener('click', () =>
@@ -549,20 +742,17 @@ async function init() {
   });
 
   window.onFirebaseAuthChanged = user => {
-    const display = document.getElementById('user-display');
     if (user) {
-      const name = user.displayName || user.email?.split('@')[0] || 'Joueur';
-      display.textContent = name;
-      document.getElementById('dropdown-name').textContent = user.email || '';
       authBtn.classList.add('logged-in');
-      window.firebaseService.getUserProfile().then(profile => {
-        if (!profile) return;
-        const themeName = SKIN_NAMES[profile.skin_id];
-        if (themeName) applyTheme(themeName);
-        if (profile.avatar_id) {
-          profileAvatarId = profile.avatar_id;
-          showUserAvatar(profile.avatar_id);
-        } else if (user.photoURL) {
+      window.firebaseService.getProfiles().then(profiles => {
+        if (!profiles.length) return;
+        // Retrouve le dernier profil utilisé, sinon prend le profil superviseur
+        const saved    = profiles.find(p => p.id === currentProfileId);
+        const supervisor = profiles.find(p => p.is_supervisor);
+        const profile  = saved || supervisor || profiles[0];
+        selectProfile(profile.id, profile);
+        profileAvatarId = profile.avatar_id || 1;
+        if (!profile.avatar_id && user.photoURL) {
           const avatarImg = document.getElementById('auth-avatar');
           const authIcon  = document.getElementById('auth-icon');
           avatarImg.src = user.photoURL;
@@ -571,10 +761,14 @@ async function init() {
         }
       }).catch(() => {});
     } else {
-      display.textContent = 'Me connecter';
       authBtn.classList.remove('logged-in');
       userDropdown.classList.add('hidden');
+      currentProfileId   = null;
+      currentProfileData = null;
+      localStorage.removeItem('geo-profile-id');
       showUserAvatar(null);
+      const display = document.getElementById('user-display');
+      if (display) display.textContent = 'Me connecter';
     }
   };
 
@@ -962,8 +1156,9 @@ function endGame(won) {
   applyLevelInactive();
   startBtn.textContent = 'Démarrer';
 
-  window.firebaseService?.saveGame({
+  window.firebaseService?.saveGame(currentProfileId, {
     levelKey: level, timerEnabled, score, timeMs, won, poolSize: gamePoolSize,
+    displayName: currentProfileData?.prenom || '',
   }).catch(console.error);
 }
 
@@ -1273,7 +1468,7 @@ async function openScoresModal() {
   if (user) {
     mineEl.innerHTML = '<p class="scores-msg">Chargement…</p>';
     try {
-      renderMyScores(await window.firebaseService.getMyScores());
+      renderMyScores(await window.firebaseService.getMyScores(currentProfileId));
     } catch(_) {
       mineEl.innerHTML = '<p class="scores-msg">Erreur de chargement.</p>';
     }
@@ -1290,7 +1485,8 @@ async function loadLeaderboard() {
   el.innerHTML = '<p class="scores-msg">Chargement…</p>';
   try {
     renderLeaderboard(await window.firebaseService.getLevelLeaderboard(levelId));
-  } catch(_) {
+  } catch(err) {
+    console.error('Leaderboard error:', err);
     el.innerHTML = '<p class="scores-msg">Erreur de chargement.</p>';
   }
 }
@@ -1349,7 +1545,6 @@ function renderLeaderboard(docs) {
 
   docs.forEach((d, i) => {
     const tr = document.createElement('tr');
-    if (d.user_id === myUid) tr.classList.add('scores-me');
 
     [String(i + 1), d.display_name || '—'].forEach(text => {
       const td = document.createElement('td');
@@ -1360,7 +1555,7 @@ function renderLeaderboard(docs) {
       (d.score || 0).toLocaleString('fr-FR'),
       starsStr(d.stars),
       GAME_TYPE_NAMES[d.game_type_id] || '–',
-      new Date(d.date).toLocaleDateString('fr-FR'),
+      d.date ? new Date(d.date).toLocaleDateString('fr-FR') : '–',
     ].forEach(text => {
       const td = document.createElement('td');
       td.textContent = text;
