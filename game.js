@@ -1,6 +1,6 @@
 // ─── Version ─────────────────────────────────────────────────────────────────
 
-const APP_VERSION = { hash: '2fe88af', date: '2026-05-07', time: '06:57', msg: 'Thème trésor : image de fond SVG + fond noir' };
+const APP_VERSION = { hash: '5f6fe2e', date: '2026-05-07', time: '16:25', msg: 'Thème trésor : couleurs pays + correction fills SVG Inkscape' };
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
