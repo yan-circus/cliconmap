@@ -440,6 +440,7 @@ async function init() {
     btn.disabled = true;
     try {
       await window.firebaseService.updateProfileAvatar(currentProfileId, profileAvatarId);
+      cachedProfiles = null;
       if (currentProfileData) currentProfileData.avatar_id = profileAvatarId;
       showUserAvatar(profileAvatarId);
       profileOverlay.classList.add('hidden');
@@ -484,6 +485,7 @@ async function init() {
     btn.disabled = true;
     try {
       await window.firebaseService.createChildProfile(prenom, nom, addProfileAvatarId);
+      cachedProfiles = null;
       addProfileOverlay.classList.add('hidden');
     } catch (err) {
       errorEl.textContent = 'Erreur lors de la création.';
@@ -499,10 +501,17 @@ async function init() {
   const authBtn      = document.getElementById('auth-btn');
   const userDropdown = document.getElementById('user-dropdown');
 
+  let cachedProfiles = null;
+
+  async function refreshProfilesCache() {
+    cachedProfiles = await window.firebaseService.getProfiles();
+    return cachedProfiles;
+  }
+
   async function renderProfilesDropdown() {
     const list = document.getElementById('profiles-list');
     list.innerHTML = '';
-    const profiles = await window.firebaseService.getProfiles();
+    const profiles = cachedProfiles ?? await refreshProfilesCache();
     const others   = [...profiles]
       .filter(p => p.id !== currentProfileId)
       .sort((a, b) => (b.is_supervisor ? 1 : 0) - (a.is_supervisor ? 1 : 0));
@@ -560,8 +569,9 @@ async function init() {
   authBtn.addEventListener('click', async () => {
     if (window.firebaseService?.getUser()) {
       if (userDropdown.classList.contains('hidden')) {
-        await renderProfilesDropdown();
+        renderProfilesDropdown();
         userDropdown.classList.remove('hidden');
+        refreshProfilesCache();
       } else {
         userDropdown.classList.add('hidden');
       }
@@ -744,7 +754,7 @@ async function init() {
   window.onFirebaseAuthChanged = user => {
     if (user) {
       authBtn.classList.add('logged-in');
-      window.firebaseService.getProfiles().then(profiles => {
+      refreshProfilesCache().then(profiles => {
         if (!profiles.length) return;
         // Retrouve le dernier profil utilisé, sinon prend le profil superviseur
         const saved    = profiles.find(p => p.id === currentProfileId);
@@ -763,6 +773,7 @@ async function init() {
     } else {
       authBtn.classList.remove('logged-in');
       userDropdown.classList.add('hidden');
+      cachedProfiles     = null;
       currentProfileId   = null;
       currentProfileData = null;
       localStorage.removeItem('geo-profile-id');
