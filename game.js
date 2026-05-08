@@ -1,6 +1,6 @@
 // ─── Version ─────────────────────────────────────────────────────────────────
 
-const APP_VERSION = { hash: '1239a58', date: '2026-05-08', time: '00:22', msg: 'Auth : refonte structure données + menu profils superviseur' };
+const APP_VERSION = { hash: '068e0ae', date: '2026-05-08', time: '12:49', msg: 'Auth : cache profils — suppression délai ouverture menu connexion' };
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
