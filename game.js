@@ -866,6 +866,7 @@ function updateDevPanel() {
   const zoomPct = Math.round((baseW / vb.w) * 100);
   const w = window.innerWidth;
   const device = w <= 750 ? 'mobile' : w <= 900 ? 'tablette' : 'desktop';
+  document.getElementById('dev-version').textContent = APP_VERSION.hash;
   document.getElementById('dev-zoom').textContent   = zoomPct + ' %';
   document.getElementById('dev-screen').textContent = `${w} × ${window.innerHeight}`;
   document.getElementById('dev-device').textContent = device;
