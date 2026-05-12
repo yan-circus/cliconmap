@@ -140,9 +140,6 @@ header {
 body[data-mode="learning"] header { background: var(--header-bg-learn); }
 body.wrong-reveal header           { background: rgba(180, 30, 20, 0.55); }
 
-/* DEBUG */
-header        { box-shadow: inset 0 0 0 3px lime; }
-#main-content { box-shadow: inset 0 0 0 3px blue; }
 
 #header-left, #header-right {
   display: flex;
