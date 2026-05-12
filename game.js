@@ -1,6 +1,6 @@
 // ─── Version ─────────────────────────────────────────────────────────────────
 
-const APP_VERSION = { hash: '2f2ff14', date: '2026-05-12', time: '14:22', msg: 'UI : refonte interface mobile — architecture 3 couches + panneau info apprentissage' };
+const APP_VERSION = { hash: 'b07494e', date: '2026-05-12', time: '16:41', msg: 'UI : ajustements graphiques header et contrôles' };
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
