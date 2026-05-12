@@ -169,6 +169,23 @@ body.game-running #user-area         { display: none; }
 #header-setup-right { display: flex; align-items: center; gap: 6px; }
 #lives { display: none; color: var(--wrong); letter-spacing: 4px; font-size: 2.5rem; }
 
+/* ── Bouton fermer (mobile uniquement) ── */
+#close-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255,255,255,0.4);
+  background: rgba(0,0,0,0.3);
+  color: rgba(255,255,255,0.8);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+@media (max-width: 750px) {
+  #close-btn { display: flex; }
+}
+
 /* ── Mode tabs (jeu / apprentissage) ── */
 #mode-tabs {
   display: flex;

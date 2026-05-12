@@ -817,6 +817,22 @@ async function init() {
   window.addEventListener('resize', updateHeaderHeight);
   new ResizeObserver(updateHeaderHeight).observe(document.querySelector('header'));
   resetZoom();
+
+  // Plein écran automatique au premier tap sur mobile
+  if (window.innerWidth <= 750) {
+    document.addEventListener('touchstart', () => {
+      if (!document.fullscreenElement)
+        document.documentElement.requestFullscreen().catch(() => {});
+    }, { once: true });
+  }
+
+  // Bouton fermer (mobile)
+  document.getElementById('close-btn').addEventListener('click', () => {
+    window.close();
+    setTimeout(() => {
+      if (document.fullscreenElement) document.exitFullscreen();
+    }, 300);
+  });
 }
 
 // ─── ViewBox / Zoom / Pan ─────────────────────────────────────────────────────
