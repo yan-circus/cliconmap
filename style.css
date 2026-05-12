@@ -9,8 +9,10 @@
   inset: 0;
   background: var(--bg);
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 3rem;
   z-index: 1000;
   animation: splash-fade-out 0.5s ease-out 2.5s forwards;
 }
@@ -24,6 +26,10 @@
   animation: splash-fade-in 0.5s ease-out forwards;
 }
 
+#splash-btn {
+  display: none;
+}
+
 @keyframes splash-fade-in {
   from { opacity: 0; transform: scale(0.92); }
   to   { opacity: 1; transform: scale(1); }
@@ -31,6 +37,30 @@
 
 @keyframes splash-fade-out {
   to { opacity: 0; pointer-events: none; }
+}
+
+@media (max-width: 900px) {
+  #splash {
+    animation: none;
+  }
+  #splash-btn {
+    display: block;
+    padding: 0.9rem 3rem;
+    font-size: 1.4rem;
+    font-weight: bold;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    background: var(--correct);
+    color: #fff;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    opacity: 0;
+    animation: splash-fade-in 0.5s ease-out 0.4s forwards;
+  }
+  #splash-btn:active {
+    transform: scale(0.96);
+  }
 }
 
 /* ══════════════════════════════════════════════════════════

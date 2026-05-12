@@ -819,19 +819,6 @@ async function init() {
   new ResizeObserver(updateHeaderHeight).observe(document.querySelector('header'));
   resetZoom();
 
-  // Plein écran automatique au premier tap sur mobile
-  if (window.innerWidth <= 750) {
-    document.addEventListener('touchstart', () => {
-      if (document.fullscreenElement) return;
-      const el = document.documentElement;
-      const req = el.requestFullscreen || el.webkitRequestFullscreen;
-      if (!req) return;
-      req.call(el).catch(err => {
-        document.getElementById('dev-fs-err').textContent = err.message || String(err);
-      });
-    });
-  }
-
   // Bouton fermer (mobile)
   document.getElementById('close-btn').addEventListener('click', () => {
     window.close();
@@ -1788,7 +1775,26 @@ function shuffle(arr) {
 
 // ─── Start ────────────────────────────────────────────────────────────────────
 
-const splashEl = document.getElementById('splash');
-splashEl.addEventListener('animationend', () => { splashEl.style.display = 'none'; });
+const splashEl  = document.getElementById('splash');
+const splashBtn = document.getElementById('splash-btn');
+
+function dismissSplash() {
+  splashEl.style.transition = 'opacity 0.4s';
+  splashEl.style.opacity    = '0';
+  splashEl.addEventListener('transitionend', () => { splashEl.style.display = 'none'; }, { once: true });
+}
+
+if (window.innerWidth <= 900) {
+  splashBtn.addEventListener('click', () => {
+    const el  = document.documentElement;
+    const req = el.requestFullscreen || el.webkitRequestFullscreen;
+    if (req) req.call(el).catch(err => {
+      document.getElementById('dev-fs-err').textContent = err.message || String(err);
+    });
+    dismissSplash();
+  });
+} else {
+  splashEl.addEventListener('animationend', () => { splashEl.style.display = 'none'; });
+}
 
 init();
