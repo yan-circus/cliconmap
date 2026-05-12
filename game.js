@@ -1,6 +1,6 @@
 // ─── Version ─────────────────────────────────────────────────────────────────
 
-const APP_VERSION = { hash: 'b07494e', date: '2026-05-12', time: '16:41', msg: 'UI : ajustements graphiques header et contrôles' };
+const APP_VERSION = { hash: '31e380f', date: '2026-05-12', time: '18:23', msg: 'UI mobile : simplification breakpoint 750px' };
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
