@@ -822,9 +822,14 @@ async function init() {
   // Plein écran automatique au premier tap sur mobile
   if (window.innerWidth <= 750) {
     document.addEventListener('touchstart', () => {
-      if (!document.fullscreenElement)
-        document.documentElement.requestFullscreen().catch(() => {});
-    }, { once: true });
+      if (document.fullscreenElement) return;
+      const el = document.documentElement;
+      const req = el.requestFullscreen || el.webkitRequestFullscreen;
+      if (!req) return;
+      req.call(el).catch(err => {
+        document.getElementById('dev-fs-err').textContent = err.message || String(err);
+      });
+    });
   }
 
   // Bouton fermer (mobile)
@@ -865,6 +870,9 @@ function updateDevPanel() {
   document.getElementById('dev-screen').textContent = `${w} × ${window.innerHeight}`;
   document.getElementById('dev-device').textContent = device;
   document.getElementById('dev-fs').textContent     = document.fullscreenElement ? 'true' : 'false';
+  const el = document.documentElement;
+  document.getElementById('dev-fs-api').textContent =
+    el.requestFullscreen ? 'std' : el.webkitRequestFullscreen ? 'webkit' : 'none';
 }
 
 // ─── Learning mode info panel ─────────────────────────────────────────────────
