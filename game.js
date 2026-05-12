@@ -1,6 +1,6 @@
 // ─── Version ─────────────────────────────────────────────────────────────────
 
-const APP_VERSION = { hash: '97a763e', date: '2026-05-12', time: '07:07', msg: 'UI : refonte interface — header unifié + splash screen' };
+const APP_VERSION = { hash: 'bb94901', date: '2026-05-12', time: '07:52', msg: 'UI : bouton Nouvelle Partie relance directement la partie' };
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
