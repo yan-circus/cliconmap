@@ -1479,67 +1479,25 @@ body[data-timer="off"]     #timer-gauge  { display: none; }
   #question .q-name { font-size: 1.2rem; }
 }
 
-/* ── Mobile (<750px) : header en 2 rangées ── */
+/* ── Mobile (<750px) ── */
 @media (max-width: 750px) {
-  /* Labels courts */
-  .lbl-short { display: inline; }
-  .lbl-full  { display: none; }
-
-  header {
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: auto auto;
-    padding: 5px 8px;
-    gap: 4px;
-    min-height: unset;
-  }
-  #header-left  { grid-column: 1; grid-row: 1; }
-  #header-right { grid-column: 2; grid-row: 1; justify-content: flex-end; }
-  #header-center {
-    grid-column: 1 / -1;
-    grid-row: 2;
-    text-align: center;
-    padding: 3px 0;
-    border-top: 1px solid rgba(255,255,255,0.08);
-  }
-
-  #header-setup { gap: 4px; }
-  #header-setup-right { gap: 4px; }
-
-  /* Masquer les boutons secondaires sur mobile en setup */
-  body:not(.game-running) #fs-btn,
-  body:not(.game-running) #scores-btn { display: none; }
-
-  #lives { font-size: 0.95rem; letter-spacing: 2px; }
-  #score { font-size: 0.95rem; }
-
-  #question { font-size: 0.9rem; }
-  #question .q-name { font-size: clamp(1rem, 5vw, 1.2rem); }
+  /* Taille question idem tablette */
+  #question { font-size: 1rem; }
+  #question .q-name { font-size: 1.2rem; }
   #question .q-label, #question .q-details { font-size: 0.72rem; }
-  #message { font-size: 0.82rem; }
 
-  /* Mode apprentissage : colonnes pop. et superficie masquées */
+  /* Colonnes population et superficie masquées */
   #country-table th:nth-child(3),
   #country-table th:nth-child(4),
   #country-table td:nth-child(3),
   #country-table td:nth-child(4) { display: none; }
 
-  /* Mode apprentissage mobile : liste hauteur limitée, carte visible derrière */
-  body[data-mode="learning"] #list-panel {
-    width: 100%;
-    height: 50vh;
-    border-right: none;
-    border-bottom: 1px solid var(--accent);
-  }
-  body[data-mode="learning"] #timer-gauge { display: none; }
-
-  /* Modales plein écran sur mobile */
+  /* Modales quasi plein écran */
   #settings-panel, #help-panel {
     width: 95vw;
     padding: 14px 16px 18px;
     max-height: 90vh;
   }
-
-  /* Game over panel */
   #gameover-panel { padding: 24px 28px; min-width: 200px; }
   #gameover-title { font-size: 1.5rem; }
   #gameover-score { font-size: 1.2rem; }
