@@ -1,6 +1,6 @@
 // ─── Version ─────────────────────────────────────────────────────────────────
 
-const APP_VERSION = { hash: '6e0c521', date: '2026-05-12', time: '18:39', msg: 'Mobile : plein écran automatique + bouton fermer' };
+const APP_VERSION = { hash: '6eb74c5', date: '2026-05-12', time: '21:01', msg: 'Debug fullscreen mobile : API webkit + log erreur dans dev panel' };
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
