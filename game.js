@@ -96,28 +96,28 @@ const THEMES = {
     '--text':         '#e0e0e0', '--text-dim':     '#888',    '--ocean':        '#2a4a6b',
     '--country-fill': '#c8d6c8', '--hover-fill':   '#f0c040', '--correct':      '#2ecc71',
     '--wrong':        '#e74c3c', '--selected-fill':'#3ab5e6', '--radius-btn':   '6px',
-    '--h1-font':      'inherit',
+    '--h1-font':      'inherit', '--header-bg':    'rgba(22,33,62,0.55)',
   },
   colore: {
     '--bg':           '#e8f4fd', '--surface':      '#ffffff', '--accent':       '#2980b9',
     '--text':         '#1a1a2a', '--text-dim':     '#d0e8f8', '--ocean':        '#5bafd6',
     '--country-fill': '#a8d8a8', '--hover-fill':   '#f39c12', '--correct':      '#27ae60',
     '--wrong':        '#c0392b', '--selected-fill':'#2980b9', '--radius-btn':   '6px',
-    '--h1-font':      'inherit',
+    '--h1-font':      'inherit', '--header-bg':    'rgba(255,255,255,0.55)',
   },
   tresor: {
     '--bg':           '#1e1006', '--surface':      '#2e1a08', '--accent':       '#7a4a15',
     '--text':         '#f0ddb0', '--text-dim':     '#d4b880', '--ocean':        '#000000',
     '--country-fill': '#cd8e29', '--hover-fill':   '#e8b030', '--correct':      '#5a9040',
     '--wrong':        '#b03020', '--selected-fill':'#d4801a', '--radius-btn':   '6px',
-    '--h1-font':      "Georgia, 'Times New Roman', serif",
+    '--h1-font':      "Georgia, 'Times New Roman', serif", '--header-bg': 'rgba(46,26,8,0.55)',
   },
   multi: {
     '--bg':           '#1a1a2e', '--surface':      '#16213e', '--accent':       '#0f3460',
     '--text':         '#e0e0e0', '--text-dim':     '#888',    '--ocean':        '#1a2a4a',
     '--country-fill': '#c8d6c8', '--hover-fill':   '#f0c040', '--correct':      '#2ecc71',
     '--wrong':        '#e74c3c', '--selected-fill':'#3ab5e6', '--radius-btn':   '6px',
-    '--h1-font':      'inherit',
+    '--h1-font':      'inherit', '--header-bg':    'rgba(22,33,62,0.55)',
   },
 };
 
@@ -237,18 +237,19 @@ let timerEnabled = true;
 
 // ─── DOM refs ─────────────────────────────────────────────────────────────────
 
-const mapContainer = document.getElementById('map-container');
-const questionEl   = document.getElementById('question');
-const messageEl    = document.getElementById('message');
-const scoreEl      = document.getElementById('score');
-const livesEl      = document.getElementById('lives');
-const startBtn     = document.getElementById('start-btn');
-const levelSelect  = document.getElementById('level-select');
-const listBody     = document.getElementById('list-body');
-const btnGame      = document.getElementById('btn-game');
-const btnLearn     = document.getElementById('btn-learn');
-const timerFill    = document.getElementById('timer-fill');
-const timerBtn     = document.getElementById('timer-btn');
+const mapContainer   = document.getElementById('map-container');
+const questionEl     = document.getElementById('question');
+const messageEl      = document.getElementById('message');
+const scoreEl        = document.getElementById('score');
+const livesEl        = document.getElementById('lives');
+const startBtn       = document.getElementById('start-btn');
+const stopBtn        = document.getElementById('stop-btn');
+const levelSelect    = document.getElementById('level-select');
+const listBody       = document.getElementById('list-body');
+const modeToggleBtn  = document.getElementById('mode-toggle-btn');
+const timerFill      = document.getElementById('timer-fill');
+const timerBtn       = document.getElementById('timer-btn');
+const gameoverOverlay = document.getElementById('gameover-overlay');
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 
@@ -305,10 +306,18 @@ async function init() {
   drawSmallCountryMarkers(svg);
   setupMapInteraction(svg);
 
-  btnGame.addEventListener('click',  () => setMode('game'));
-  btnLearn.addEventListener('click', () => setMode('learning'));
-  startBtn.addEventListener('click', () => {
-    if (gameState === 'idle') startGame(); else resetGameIdle();
+  modeToggleBtn.addEventListener('click', () => setMode(mode === 'game' ? 'learning' : 'game'));
+  startBtn.addEventListener('click', startGame);
+  stopBtn.addEventListener('click',  resetGameIdle);
+  document.getElementById('gameover-close').addEventListener('click', () => {
+    gameoverOverlay.classList.add('hidden');
+    resetGameIdle();
+  });
+  gameoverOverlay.addEventListener('click', e => {
+    if (e.target === gameoverOverlay) {
+      gameoverOverlay.classList.add('hidden');
+      resetGameIdle();
+    }
   });
 
   levelSelect.addEventListener('change', e => {
@@ -797,6 +806,8 @@ async function init() {
   });
   document.body.dataset.timer = 'on';
 
+  updateHeaderHeight();
+  window.addEventListener('resize', updateHeaderHeight);
   resetZoom();
 }
 
@@ -813,12 +824,20 @@ function applyViewBox() {
   updateDevPanel();
 }
 
+function updateHeaderHeight() {
+  const h = document.querySelector('header').getBoundingClientRect().height;
+  document.documentElement.style.setProperty('--header-h', Math.ceil(h) + 'px');
+}
+
 function updateDevPanel() {
   if (!document.body.classList.contains('dev-mode')) return;
   const baseW  = parseViewBox(VIEWBOXES[level] ?? VIEWBOXES.monde).w;
   const zoomPct = Math.round((baseW / vb.w) * 100);
-  document.getElementById('dev-zoom').textContent = zoomPct + ' %';
-  document.getElementById('dev-screen').textContent = `${window.innerWidth} × ${window.innerHeight}`;
+  const w = window.innerWidth;
+  const device = w <= 600 ? 'mobile' : w <= 900 ? 'tablette' : 'desktop';
+  document.getElementById('dev-zoom').textContent   = zoomPct + ' %';
+  document.getElementById('dev-screen').textContent = `${w} × ${window.innerHeight}`;
+  document.getElementById('dev-device').textContent = device;
 }
 
 function defaultZoomFactor() {
@@ -1032,8 +1051,9 @@ function handleTimeout() {
 function setMode(newMode) {
   mode = newMode;
   document.body.dataset.mode = mode;
-  btnGame.classList.toggle('active',  mode === 'game');
-  btnLearn.classList.toggle('active', mode === 'learning');
+  modeToggleBtn.dataset.mode = mode;
+  modeToggleBtn.querySelector('.lbl-full').textContent = mode === 'game' ? 'Mode Jeu' : 'Mode Apprentissage';
+  modeToggleBtn.querySelector('.lbl-short').textContent = mode === 'game' ? 'Jeu' : 'Appr.';
 
   clearAllHighlights();
   selectedId = null;
@@ -1099,7 +1119,6 @@ function startGame() {
 
   document.body.classList.add('game-running');
   updateUI();
-  startBtn.textContent = 'Arrêter';
   nextQuestion();
 }
 
@@ -1161,11 +1180,14 @@ function endGame(won) {
   document.body.classList.remove('game-running');
   document.body.classList.add('game-over');
   gameState = 'idle';
-  setQuestionText(won ? 'Félicitations !' : 'Game over');
+  setQuestionText('');
   setMessage('', '');
   clearAllHighlights();
   applyLevelInactive();
-  startBtn.textContent = 'Démarrer';
+
+  document.getElementById('gameover-title').textContent = won ? 'Félicitations !' : 'Game over';
+  document.getElementById('gameover-score').textContent = score.toLocaleString('fr-FR') + ' pts';
+  gameoverOverlay.classList.remove('hidden');
 
   window.firebaseService?.saveGame(currentProfileId, {
     levelKey: level, timerEnabled, score, timeMs, won, poolSize: gamePoolSize,
@@ -1177,10 +1199,10 @@ function resetGameIdle() {
   resetTimerGauge();
   document.body.classList.remove('game-running');
   document.body.classList.remove('game-over');
+  gameoverOverlay.classList.add('hidden');
   gameState = 'idle';
   clearAllHighlights();
   applyLevelInactive();
-  startBtn.textContent = 'Démarrer';
   document.getElementById('country-counter').classList.add('hidden');
   updateUI();
 }
@@ -1449,7 +1471,7 @@ function clearAllHighlights() {
 }
 
 function updateUI() {
-  scoreEl.textContent = score;
+  scoreEl.textContent = score.toLocaleString('fr-FR') + ' pts';
   livesEl.textContent = '♥'.repeat(lives) + '♡'.repeat(Math.max(0, LIVES_MAX - lives));
 }
 
@@ -1631,5 +1653,8 @@ function shuffle(arr) {
 }
 
 // ─── Start ────────────────────────────────────────────────────────────────────
+
+const splashEl = document.getElementById('splash');
+splashEl.addEventListener('animationend', () => { splashEl.style.display = 'none'; });
 
 init();

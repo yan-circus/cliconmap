@@ -13,15 +13,79 @@
   <link rel="apple-touch-icon" href="icon.png">
 </head>
 <body data-mode="game" data-theme="sombre">
+
+  <div id="splash">
+    <div class="splash-title">CLIC ON MAP</div>
+  </div>
+
   <div id="app">
 
     <header>
-      <h1>Clic On Map</h1>
-      <div id="header-right">
-        <div id="stats">
-          <span id="lives">♥ ♥ ♥</span>
+      <div id="header-left">
+        <div id="header-setup">
+          <button id="mode-toggle-btn" data-mode="game">
+            <span class="lbl-full">Mode Jeu</span><span class="lbl-short">Jeu</span>
+          </button>
+          <select id="level-select">
+            <option value="monde">Monde entier</option>
+            <option value="Europe">Europe</option>
+            <option value="UE">Union Européenne</option>
+            <option value="Afrique">Afrique</option>
+            <option value="Asie">Asie</option>
+            <option value="Amérique">Amérique</option>
+            <option value="Océanie">Océanie</option>
+          </select>
+          <button id="timer-btn" class="active" title="Désactiver le chrono">⏱</button>
+          <button id="start-btn">Démarrer</button>
+        </div>
+        <div id="header-game-left">
+          <button id="stop-btn">■ Arrêter</button>
           <span id="score">0 pts</span>
         </div>
+      </div>
+
+      <div id="header-center">
+        <div id="question-area">
+          <p id="question">Choisissez un niveau et cliquez sur Démarrer</p>
+          <p id="message"></p>
+        </div>
+        <div id="dev-panel">
+          <div class="dev-row"><span class="dev-label">Zoom</span><span id="dev-zoom">—</span></div>
+          <div class="dev-row"><span class="dev-label">Écran</span><span id="dev-screen">—</span></div>
+          <div class="dev-row"><span class="dev-label">Device</span><span id="dev-device">—</span></div>
+          <div class="dev-row"><span class="dev-label">Drag Δ</span><span id="dev-drag">—</span></div>
+          <div class="dev-row"><span class="dev-label">BG image</span><span id="dev-bg-img">—</span></div>
+        </div>
+      </div>
+
+      <div id="header-right">
+        <div id="header-setup-right">
+          <button id="fs-btn" title="Plein écran">
+            <svg class="icon-expand" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/>
+              <line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>
+            </svg>
+            <svg class="icon-compress" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/>
+              <line x1="10" y1="14" x2="3" y2="21"/><line x1="21" y1="3" x2="14" y2="10"/>
+            </svg>
+          </button>
+          <button id="scores-btn" title="Scores">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="20" x2="18" y2="10"/>
+              <line x1="12" y1="20" x2="12" y2="4"/>
+              <line x1="6"  y1="20" x2="6"  y2="14"/>
+            </svg>
+          </button>
+          <button id="help-btn" title="Aide">?</button>
+          <button id="settings-btn" title="Paramètres">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06-.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+          </button>
+        </div>
+        <span id="lives">♥ ♥ ♥</span>
         <div id="user-area">
           <button id="auth-btn">
             <svg id="auth-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -37,63 +101,6 @@
         </div>
       </div>
     </header>
-
-    <div id="toolbar">
-      <div id="mode-btns">
-        <button id="btn-game"  class="mode-btn active"><span class="lbl-full">Mode Jeu</span><span class="lbl-short">Jeu</span></button>
-        <button id="btn-learn" class="mode-btn"><span class="lbl-full">Mode Apprentissage</span><span class="lbl-short">Appr.</span></button>
-      </div>
-      <select id="level-select">
-        <option value="monde">Monde entier</option>
-        <option value="Europe">Europe</option>
-        <option value="UE">Union Européenne</option>
-        <option value="Afrique">Afrique</option>
-        <option value="Asie">Asie</option>
-        <option value="Amérique">Amérique</option>
-        <option value="Océanie">Océanie</option>
-      </select>
-      <button id="start-btn">Démarrer</button>
-      <button id="timer-btn" class="active" title="Désactiver le chrono">⏱</button>
-      <div id="right-btns">
-        <button id="fs-btn" title="Plein écran">
-          <svg class="icon-expand" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/>
-            <line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>
-          </svg>
-          <svg class="icon-compress" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/>
-            <line x1="10" y1="14" x2="3" y2="21"/><line x1="21" y1="3" x2="14" y2="10"/>
-          </svg>
-        </button>
-        <button id="scores-btn" title="Scores">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="18" y1="20" x2="18" y2="10"/>
-            <line x1="12" y1="20" x2="12" y2="4"/>
-            <line x1="6"  y1="20" x2="6"  y2="14"/>
-          </svg>
-        </button>
-        <button id="help-btn" title="Aide">?</button>
-        <button id="settings-btn" title="Paramètres">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="3"/>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06-.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-          </svg>
-        </button>
-      </div>
-    </div>
-
-    <div id="info-panel">
-      <div id="question-area">
-        <p id="question">Choisissez un niveau et cliquez sur Démarrer</p>
-        <p id="message"></p>
-      </div>
-      <div id="dev-panel">
-        <div class="dev-row"><span class="dev-label">Zoom</span><span id="dev-zoom">—</span></div>
-        <div class="dev-row"><span class="dev-label">Écran</span><span id="dev-screen">—</span></div>
-        <div class="dev-row"><span class="dev-label">Drag Δ</span><span id="dev-drag">—</span></div>
-        <div class="dev-row"><span class="dev-label">BG image</span><span id="dev-bg-img">—</span></div>
-      </div>
-    </div>
 
     <div id="main-content">
 
@@ -131,6 +138,14 @@
 
       <div id="timer-gauge"><div id="timer-fill"></div></div>
       <div id="map-container"></div>
+
+      <div id="gameover-overlay" class="hidden">
+        <div id="gameover-panel">
+          <div id="gameover-title">Game over</div>
+          <div id="gameover-score">0 pts</div>
+          <button id="gameover-close">Nouvelle partie</button>
+        </div>
+      </div>
 
     </div>
   </div>
