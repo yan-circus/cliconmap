@@ -843,7 +843,7 @@ function updateDevPanel() {
   const baseW  = parseViewBox(VIEWBOXES[level] ?? VIEWBOXES.monde).w;
   const zoomPct = Math.round((baseW / vb.w) * 100);
   const w = window.innerWidth;
-  const device = w <= 600 ? 'mobile' : w <= 900 ? 'tablette' : 'desktop';
+  const device = w <= 750 ? 'mobile' : w <= 900 ? 'tablette' : 'desktop';
   document.getElementById('dev-zoom').textContent   = zoomPct + ' %';
   document.getElementById('dev-screen').textContent = `${w} × ${window.innerHeight}`;
   document.getElementById('dev-device').textContent = device;
@@ -1236,7 +1236,7 @@ function nextQuestion() {
   if (queue.length === 0) { endGame(true); return; }
   currentCountry = queue.pop();
   resetZoom();
-  setQuestion(currentCountry.nom, null, 'Cliquez sur :');
+  setQuestion(currentCountry.nom, null, 'Cliquer →');
   setMessage('', '');
   gameState = 'playing';
   startTimer();
@@ -1311,6 +1311,8 @@ function resetGameIdle() {
   document.body.classList.remove('game-over');
   gameoverOverlay.classList.add('hidden');
   gameState = 'idle';
+  setQuestionText('');
+  setMessage('', '');
   clearAllHighlights();
   hideInfoPanel();
   applyLevelInactive();
@@ -1576,7 +1578,7 @@ function clearAllHighlights() {
 }
 
 function updateUI() {
-  scoreEl.textContent = score.toLocaleString('fr-FR') + ' pts';
+  scoreEl.textContent = score.toLocaleString('fr-FR');
   livesEl.textContent = '♥'.repeat(lives) + '♡'.repeat(Math.max(0, LIVES_MAX - lives));
 }
 
