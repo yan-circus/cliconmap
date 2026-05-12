@@ -1,6 +1,6 @@
 // ─── Version ─────────────────────────────────────────────────────────────────
 
-const APP_VERSION = { hash: 'bb94901', date: '2026-05-12', time: '07:52', msg: 'UI : bouton Nouvelle Partie relance directement la partie' };
+const APP_VERSION = { hash: '2f2ff14', date: '2026-05-12', time: '14:22', msg: 'UI : refonte interface mobile — architecture 3 couches + panneau info apprentissage' };
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
