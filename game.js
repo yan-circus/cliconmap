@@ -418,6 +418,7 @@ async function init() {
   });
   document.addEventListener('fullscreenchange', () => {
     document.body.classList.toggle('is-fullscreen', !!document.fullscreenElement);
+    updateDevPanel();
   });
 
   // Avatar state
@@ -863,6 +864,7 @@ function updateDevPanel() {
   document.getElementById('dev-zoom').textContent   = zoomPct + ' %';
   document.getElementById('dev-screen').textContent = `${w} × ${window.innerHeight}`;
   document.getElementById('dev-device').textContent = device;
+  document.getElementById('dev-fs').textContent     = document.fullscreenElement ? 'true' : 'false';
 }
 
 // ─── Learning mode info panel ─────────────────────────────────────────────────
