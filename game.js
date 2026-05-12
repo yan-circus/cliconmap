@@ -311,7 +311,7 @@ async function init() {
   stopBtn.addEventListener('click',  resetGameIdle);
   document.getElementById('gameover-close').addEventListener('click', () => {
     gameoverOverlay.classList.add('hidden');
-    resetGameIdle();
+    startGame();
   });
   gameoverOverlay.addEventListener('click', e => {
     if (e.target === gameoverOverlay) {
@@ -1099,6 +1099,7 @@ function startGame() {
   correctCount = 0;
   gameState = 'playing';
   document.body.classList.remove('game-over');
+  gameoverOverlay.classList.add('hidden');
   selectedId = null;
   hideAllCircles();
 
