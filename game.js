@@ -246,10 +246,16 @@ const startBtn       = document.getElementById('start-btn');
 const stopBtn        = document.getElementById('stop-btn');
 const levelSelect    = document.getElementById('level-select');
 const listBody       = document.getElementById('list-body');
-const modeToggleBtn  = document.getElementById('mode-toggle-btn');
+const modeGameBtn    = document.getElementById('mode-game-btn');
+const modeLearnBtn   = document.getElementById('mode-learn-btn');
 const timerFill      = document.getElementById('timer-fill');
 const timerBtn       = document.getElementById('timer-btn');
-const gameoverOverlay = document.getElementById('gameover-overlay');
+const gameoverOverlay  = document.getElementById('gameover-overlay');
+const infoPanelEl      = document.getElementById('country-info-panel');
+const infoLineEl       = document.getElementById('info-line');
+const infoDotEl        = document.getElementById('info-dot');
+
+let infoPanelId = null;
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 
@@ -306,7 +312,8 @@ async function init() {
   drawSmallCountryMarkers(svg);
   setupMapInteraction(svg);
 
-  modeToggleBtn.addEventListener('click', () => setMode(mode === 'game' ? 'learning' : 'game'));
+  modeGameBtn.addEventListener('click',  () => setMode('game'));
+  modeLearnBtn.addEventListener('click', () => setMode('learning'));
   startBtn.addEventListener('click', startGame);
   stopBtn.addEventListener('click',  resetGameIdle);
   document.getElementById('gameover-close').addEventListener('click', () => {
@@ -808,6 +815,7 @@ async function init() {
 
   updateHeaderHeight();
   window.addEventListener('resize', updateHeaderHeight);
+  new ResizeObserver(updateHeaderHeight).observe(document.querySelector('header'));
   resetZoom();
 }
 
@@ -822,6 +830,7 @@ function applyViewBox() {
   const svg = mapContainer.querySelector('svg');
   if (svg) svg.setAttribute('viewBox', `${vb.x} ${vb.y} ${vb.w} ${vb.h}`);
   updateDevPanel();
+  if (infoPanelId) requestAnimationFrame(updateInfoPanel);
 }
 
 function updateHeaderHeight() {
@@ -838,6 +847,107 @@ function updateDevPanel() {
   document.getElementById('dev-zoom').textContent   = zoomPct + ' %';
   document.getElementById('dev-screen').textContent = `${w} × ${window.innerHeight}`;
   document.getElementById('dev-device').textContent = device;
+}
+
+// ─── Learning mode info panel ─────────────────────────────────────────────────
+
+function showInfoPanel(country) {
+  document.getElementById('cip-name').textContent    = country.nom;
+  document.getElementById('cip-capital').textContent = 'Capitale : ' + country.capitale;
+  document.getElementById('cip-pop').textContent     = formatPop(country.population);
+  infoPanelId = country.id;
+  infoPanelEl.classList.remove('hidden');
+  requestAnimationFrame(updateInfoPanel);
+}
+
+function hideInfoPanel() {
+  infoPanelId = null;
+  infoPanelEl.classList.add('hidden');
+  infoLineEl.setAttribute('visibility', 'hidden');
+  infoDotEl.setAttribute('visibility', 'hidden');
+}
+
+function getCountryScreenCenter(id) {
+  const paths = countryPaths[id];
+  if (paths && paths.length > 0) {
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    paths.forEach(p => {
+      const r = p.getBoundingClientRect();
+      if (r.width === 0 && r.height === 0) return;
+      minX = Math.min(minX, r.left);
+      minY = Math.min(minY, r.top);
+      maxX = Math.max(maxX, r.right);
+      maxY = Math.max(maxY, r.bottom);
+    });
+    if (isFinite(minX)) return { x: (minX + maxX) / 2, y: (minY + maxY) / 2 };
+  }
+  const circle = countryCircles[id];
+  if (circle) {
+    const r = circle.getBoundingClientRect();
+    return { x: (r.left + r.right) / 2, y: (r.top + r.bottom) / 2 };
+  }
+  return null;
+}
+
+function updateInfoPanel() {
+  if (!infoPanelId) return;
+  const cc = getCountryScreenCenter(infoPanelId);
+  if (!cc) return;
+
+  const panelW  = infoPanelEl.offsetWidth  || 180;
+  const panelH  = infoPanelEl.offsetHeight || 80;
+  const headerH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-h')) || 62;
+  const M = 12;
+
+  // Bornes utilisables : exclure le header et la liste pays
+  const bounds = { left: M, right: window.innerWidth - M, top: headerH + M, bottom: window.innerHeight - M };
+  const listPanel = document.getElementById('list-panel');
+  if (listPanel && listPanel.offsetWidth > 0) {
+    const lr = listPanel.getBoundingClientRect();
+    if (lr.width > window.innerWidth * 0.7) {
+      bounds.top = Math.max(bounds.top, lr.bottom + M);   // mobile : liste en haut
+    } else {
+      bounds.left = Math.max(bounds.left, lr.right + M);  // desktop : liste à gauche
+    }
+  }
+
+  // 4 diagonales — priorité NE (haut-droite), puis NW, SE, SW
+  const INV = 1 / Math.SQRT2;
+  const DIST = 150;
+  const dirs = [
+    { dx:  INV, dy: -INV },
+    { dx: -INV, dy: -INV },
+    { dx:  INV, dy:  INV },
+    { dx: -INV, dy:  INV },
+  ];
+
+  let best = dirs[0], bestOverflow = Infinity;
+  for (const d of dirs) {
+    const px = cc.x + d.dx * DIST - panelW / 2;
+    const py = cc.y + d.dy * DIST - panelH / 2;
+    const ov = Math.max(0, bounds.left - px)
+             + Math.max(0, px + panelW - bounds.right)
+             + Math.max(0, bounds.top  - py)
+             + Math.max(0, py + panelH - bounds.bottom);
+    if (ov < bestOverflow) { bestOverflow = ov; best = d; }
+  }
+
+  let px = cc.x + best.dx * DIST - panelW / 2;
+  let py = cc.y + best.dy * DIST - panelH / 2;
+  px = Math.max(bounds.left, Math.min(px, bounds.right  - panelW));
+  py = Math.max(bounds.top,  Math.min(py, bounds.bottom - panelH));
+
+  infoPanelEl.style.left = px + 'px';
+  infoPanelEl.style.top  = py + 'px';
+
+  const lx = px + panelW / 2;
+  const ly = py + panelH / 2;
+  infoLineEl.setAttribute('x1', cc.x); infoLineEl.setAttribute('y1', cc.y);
+  infoLineEl.setAttribute('x2', lx);   infoLineEl.setAttribute('y2', ly);
+  infoLineEl.setAttribute('visibility', 'visible');
+  infoDotEl.setAttribute('cx', cc.x);
+  infoDotEl.setAttribute('cy', cc.y);
+  infoDotEl.setAttribute('visibility', 'visible');
 }
 
 function defaultZoomFactor() {
@@ -1034,7 +1144,7 @@ function handleTimeout() {
   requeueCurrent();
   highlight(currentCountry.id, 'correct');
   document.body.classList.add('wrong-reveal');
-  setMessage(`⏱ Temps écoulé — c'était ${currentCountry.nom}`, 'wrong');
+  setMessage('', '');
   gameState = 'feedback';
   updateUI();
   setTimeout(() => {
@@ -1051,23 +1161,21 @@ function handleTimeout() {
 function setMode(newMode) {
   mode = newMode;
   document.body.dataset.mode = mode;
-  modeToggleBtn.dataset.mode = mode;
-  modeToggleBtn.querySelector('.lbl-full').textContent = mode === 'game' ? 'Mode Jeu' : 'Mode Apprentissage';
-  modeToggleBtn.querySelector('.lbl-short').textContent = mode === 'game' ? 'Jeu' : 'Appr.';
 
   clearAllHighlights();
+  hideInfoPanel();
   selectedId = null;
 
   if (mode === 'learning') {
     resetGameIdle();
     applyLevelInactive();
     renderList();
-    setQuestionText('Cliquez sur un pays de la liste ou de la carte');
+    setQuestionText('');
     setMessage('', '');
   } else {
     listBody.innerHTML = '';
     applyLevelInactive();
-    setQuestionText('Choisissez un niveau et cliquez sur Démarrer');
+    setQuestionText('');
     setMessage('', '');
   }
 }
@@ -1101,6 +1209,7 @@ function startGame() {
   document.body.classList.remove('game-over');
   gameoverOverlay.classList.add('hidden');
   selectedId = null;
+  hideInfoPanel();
   hideAllCircles();
 
   const pool = getCountriesForLevel();
@@ -1143,7 +1252,7 @@ function handleGameClick(clickedId) {
     score += pts;
     correctCount++;
     highlight(currentCountry.id, 'correct');
-    setMessage(`✓ Bravo, c'est bien ${currentCountry.nom} ! +${pts} pts`, 'correct');
+    setMessage('', '');
     gameState = 'feedback';
     updateUI();
     updateCounter();
@@ -1159,7 +1268,7 @@ function handleGameClick(clickedId) {
     highlight(clickedId, 'wrong');
     highlight(currentCountry.id, 'correct');
     document.body.classList.add('wrong-reveal');
-    setMessage(`✗ Non — c'était ${currentCountry.nom}`, 'wrong');
+    setMessage('', '');
     gameState = 'feedback';
     updateUI();
     setTimeout(() => {
@@ -1203,6 +1312,7 @@ function resetGameIdle() {
   gameoverOverlay.classList.add('hidden');
   gameState = 'idle';
   clearAllHighlights();
+  hideInfoPanel();
   applyLevelInactive();
   document.getElementById('country-counter').classList.add('hidden');
   updateUI();
@@ -1215,20 +1325,16 @@ function handleLearningClick(clickedId) {
   if (!country) return;
 
   hideAllCircles();
-  if (selectedId) {
-    unhighlight(selectedId, 'selected');
-    unhighlight(selectedId, 'correct');
-  }
-  document.body.classList.remove('wrong-reveal');
+  if (selectedId) unhighlight(selectedId, 'learning-selected');
 
   if (selectedId === clickedId) {
     selectedId = null;
-    setQuestionText('Cliquez sur un pays de la liste ou de la carte');
+    hideInfoPanel();
     deselectListRow();
   } else {
     selectedId = clickedId;
-    highlight(clickedId, 'selected');
-    setQuestion(country.nom, `Capitale : ${country.capitale}  ·  Population : ${formatPop(country.population)}`);
+    highlight(clickedId, 'learning-selected');
+    showInfoPanel(country);
     selectListRow(clickedId);
   }
 }
@@ -1271,25 +1377,23 @@ function centerOnCountry(id) {
 
 function selectFromList(id) {
   hideAllCircles();
-  if (selectedId) {
-    unhighlight(selectedId, 'selected');
-    unhighlight(selectedId, 'correct');
-  }
-  document.body.classList.remove('wrong-reveal');
+  if (selectedId) unhighlight(selectedId, 'learning-selected');
 
   if (selectedId === id) {
     selectedId = null;
-    setQuestionText('Cliquez sur un pays de la liste ou de la carte');
+    hideInfoPanel();
     deselectListRow();
   } else {
     selectedId = id;
-    highlight(id, 'correct');
-    document.body.classList.add('wrong-reveal');
-    setTimeout(() => document.body.classList.remove('wrong-reveal'), FEEDBACK_DELAY_WRONG);
+    highlight(id, 'learning-selected');
     showCircle(id);
-    centerOnCountry(id);
+    infoPanelId = id;
     const country = countryById[id];
-    setQuestion(country.nom, `Capitale : ${country.capitale}  ·  Population : ${formatPop(country.population)}`);
+    document.getElementById('cip-name').textContent    = country.nom;
+    document.getElementById('cip-capital').textContent = 'Capitale : ' + country.capitale;
+    document.getElementById('cip-pop').textContent     = formatPop(country.population);
+    infoPanelEl.classList.remove('hidden');
+    centerOnCountry(id);
     selectListRow(id);
   }
 }
@@ -1465,7 +1569,7 @@ function unhighlight(id, cls) {
 
 function clearAllHighlights() {
   Object.values(countryPaths).flat()
-    .forEach(p => p.classList.remove('correct', 'wrong', 'selected', 'inactive'));
+    .forEach(p => p.classList.remove('correct', 'wrong', 'selected', 'inactive', 'learning-selected'));
   Object.values(countryCircles).forEach(c => c.classList.remove('correct-outline'));
   document.body.classList.remove('wrong-reveal');
   hideAllCircles();

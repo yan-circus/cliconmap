@@ -23,9 +23,18 @@
     <header>
       <div id="header-left">
         <div id="header-setup">
-          <button id="mode-toggle-btn" data-mode="game">
-            <span class="lbl-full">Mode Jeu</span><span class="lbl-short">Jeu</span>
-          </button>
+          <div id="mode-tabs">
+            <button id="mode-game-btn" title="Mode Jeu">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/>
+              </svg>
+            </button>
+            <button id="mode-learn-btn" title="Mode Apprentissage">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+              </svg>
+            </button>
+          </div>
           <select id="level-select">
             <option value="monde">Monde entier</option>
             <option value="Europe">Europe</option>
@@ -35,18 +44,15 @@
             <option value="Amérique">Amérique</option>
             <option value="Océanie">Océanie</option>
           </select>
-          <button id="timer-btn" class="active" title="Désactiver le chrono">⏱</button>
-          <button id="start-btn">Démarrer</button>
         </div>
         <div id="header-game-left">
-          <button id="stop-btn">■ Arrêter</button>
           <span id="score">0 pts</span>
         </div>
       </div>
 
       <div id="header-center">
         <div id="question-area">
-          <p id="question">Choisissez un niveau et cliquez sur Démarrer</p>
+          <p id="question"></p>
           <p id="message"></p>
         </div>
         <div id="dev-panel">
@@ -102,8 +108,22 @@
       </div>
     </header>
 
+    <div id="map-layer">
+      <div id="map-container"></div>
+    </div>
+
     <div id="main-content">
 
+      <div id="game-controls">
+        <button id="start-btn" title="Démarrer">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+        </button>
+        <button id="stop-btn" title="Arrêter">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
+        </button>
+        <button id="timer-btn" class="active" title="Désactiver le chrono">⏱</button>
+      </div>
+      <div id="timer-gauge"><div id="timer-fill"></div></div>
       <div id="list-panel">
         <table id="country-table">
           <thead>
@@ -136,9 +156,6 @@
         </table>
       </div>
 
-      <div id="timer-gauge"><div id="timer-fill"></div></div>
-      <div id="map-container"></div>
-
       <div id="gameover-overlay" class="hidden">
         <div id="gameover-panel">
           <div id="gameover-title">Game over</div>
@@ -148,6 +165,17 @@
       </div>
 
     </div>
+  </div>
+
+  <!-- Learning mode : overlay SVG + panneau info pays -->
+  <svg id="map-overlay" xmlns="http://www.w3.org/2000/svg">
+    <line id="info-line" visibility="hidden"/>
+    <circle id="info-dot" r="5" visibility="hidden"/>
+  </svg>
+  <div id="country-info-panel" class="hidden">
+    <div id="cip-name"></div>
+    <div id="cip-capital"></div>
+    <div id="cip-pop"></div>
   </div>
 
   <!-- Help modal -->
