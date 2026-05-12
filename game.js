@@ -1,6 +1,6 @@
 // ─── Version ─────────────────────────────────────────────────────────────────
 
-const APP_VERSION = { hash: '6eb74c5', date: '2026-05-12', time: '21:01', msg: 'Debug fullscreen mobile : API webkit + log erreur dans dev panel' };
+const APP_VERSION = { hash: 'aae77cc', date: '2026-05-12', time: '21:02', msg: 'Dev panel : affichage hash version (APP_VERSION)' };
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
