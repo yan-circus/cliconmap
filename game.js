@@ -167,9 +167,13 @@ let countries      = [];
 let countryPaths   = {};   // ISO → SVGPathElement[]  (paths only, no circles)
 let countryCircles = {};   // ISO → SVGCircleElement  (separate, invisible by default)
 let countryById    = {};   // ISO → country object
+let pathTerritory  = {};   // ISO → { territory → SVGPathElement[] }
 
 let mode  = 'game';
 let level = 'monde';
+
+let infoPanelMode      = 'country';  // 'country' | 'territory'
+let infoPanelTerritory = null;
 
 // Profil joueur actif
 let currentProfileId   = localStorage.getItem('geo-profile-id') || null;
@@ -309,6 +313,19 @@ async function init() {
     if (id) registerPath(path, id);
   });
 
+  // Construire la carte des territoires nommés pour les pays continentaux
+  Object.entries(countryPaths).forEach(([iso, paths]) => {
+    const country = countryById[iso];
+    if (country?.type_territoire !== 'continental') return;
+    pathTerritory[iso] = {};
+    paths.forEach(path => {
+      const terr = path.getAttribute('data-territory');
+      if (!terr) return;
+      if (!pathTerritory[iso][terr]) pathTerritory[iso][terr] = [];
+      pathTerritory[iso][terr].push(path);
+    });
+  });
+
   drawSmallCountryMarkers(svg);
   setupMapInteraction(svg);
 
@@ -342,6 +359,28 @@ async function init() {
       updateSortIndicators();
       renderList();
     });
+  });
+
+  // Panneau info pays — bouton "+" et bouton retour pays
+  document.getElementById('cip-expand-btn').addEventListener('click', () => {
+    const terrDiv  = document.getElementById('cip-territories');
+    const btn      = document.getElementById('cip-expand-btn');
+    const expanded = terrDiv.style.display !== 'none';
+    terrDiv.style.display = expanded ? 'none' : 'flex';
+    btn.textContent       = expanded ? '+' : '−';
+    requestAnimationFrame(updateInfoPanel);
+  });
+
+  document.getElementById('cip-parent-btn').addEventListener('click', () => {
+    if (!infoPanelId) return;
+    const iso     = infoPanelId;
+    const country = countryById[iso];
+    if (selectedId) unhighlight(selectedId, 'learning-selected');
+    selectedId = iso;
+    highlight(iso, 'learning-selected');
+    showInfoPanel(country);
+    centerOnCountry(iso);
+    selectListRow(iso);
   });
 
   // Help modal
@@ -865,35 +904,101 @@ function updateDevPanel() {
 
 // ─── Learning mode info panel ─────────────────────────────────────────────────
 
+function getNamedTerritories(iso) {
+  const t = pathTerritory[iso];
+  if (!t) return [];
+  return Object.keys(t).filter(k => k !== 'main');
+}
+
 function showInfoPanel(country) {
+  infoPanelMode      = 'country';
+  infoPanelTerritory = null;
+  infoPanelId        = country.id;
+
   document.getElementById('cip-name').textContent    = country.nom;
   document.getElementById('cip-capital').textContent = 'Capitale : ' + country.capitale;
-  document.getElementById('cip-pop').textContent     = formatPop(country.population);
-  infoPanelId = country.id;
+  document.getElementById('cip-pop').textContent     = 'Population : ' + formatPop(country.population);
+
+  // Territoires nommés → bouton "+" (liste fermée par défaut)
+  const named     = getNamedTerritories(country.id);
+  const expandBtn = document.getElementById('cip-expand-btn');
+  const terrDiv   = document.getElementById('cip-territories');
+  expandBtn.textContent  = '+';
+  terrDiv.style.display  = 'none';
+  terrDiv.innerHTML      = '';
+  if (named.length > 0) {
+    expandBtn.classList.remove('hidden');
+    named.forEach(terr => {
+      const btn = document.createElement('button');
+      btn.className   = 'cip-territory-item';
+      btn.textContent = terr;
+      btn.addEventListener('click', () => selectTerritory(country.id, terr));
+      terrDiv.appendChild(btn);
+    });
+  } else {
+    expandBtn.classList.add('hidden');
+  }
+
+  document.getElementById('cip-country-view').style.display   = '';
+  document.getElementById('cip-territory-view').style.display = 'none';
+  infoPanelEl.classList.remove('hidden');
+  requestAnimationFrame(updateInfoPanel);
+}
+
+function showTerritoryPanel(iso, territory) {
+  infoPanelMode      = 'territory';
+  infoPanelTerritory = territory;
+  infoPanelId        = iso;
+
+  const country = countryById[iso];
+  document.getElementById('cip-territory-name').textContent = territory;
+  document.getElementById('cip-parent-btn').textContent     = country.nom;
+
+  document.getElementById('cip-country-view').style.display   = 'none';
+  document.getElementById('cip-territory-view').style.display = 'flex';
   infoPanelEl.classList.remove('hidden');
   requestAnimationFrame(updateInfoPanel);
 }
 
 function hideInfoPanel() {
-  infoPanelId = null;
+  infoPanelId        = null;
+  infoPanelMode      = 'country';
+  infoPanelTerritory = null;
+  document.getElementById('cip-country-view').style.display   = '';
+  document.getElementById('cip-territory-view').style.display = 'none';
+  document.getElementById('cip-territories').style.display    = 'none';
+  const expandBtn = document.getElementById('cip-expand-btn');
+  expandBtn.textContent = '+';
+  expandBtn.classList.add('hidden');
   infoPanelEl.classList.add('hidden');
   infoLineEl.setAttribute('visibility', 'hidden');
   infoDotEl.setAttribute('visibility', 'hidden');
 }
 
+function screenCenterOfPaths(paths) {
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  paths.forEach(p => {
+    const r = p.getBoundingClientRect();
+    if (r.width === 0 && r.height === 0) return;
+    minX = Math.min(minX, r.left);
+    minY = Math.min(minY, r.top);
+    maxX = Math.max(maxX, r.right);
+    maxY = Math.max(maxY, r.bottom);
+  });
+  return isFinite(minX) ? { x: (minX + maxX) / 2, y: (minY + maxY) / 2 } : null;
+}
+
 function getCountryScreenCenter(id) {
+  const country = countryById[id];
+  // Pays continental : utiliser uniquement le path principal pour le centre
+  if (country?.type_territoire === 'continental' && pathTerritory[id]?.main) {
+    const c = screenCenterOfPaths(pathTerritory[id].main);
+    if (c) return c;
+  }
   const paths = countryPaths[id];
   if (paths && paths.length > 0) {
-    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-    paths.forEach(p => {
-      const r = p.getBoundingClientRect();
-      if (r.width === 0 && r.height === 0) return;
-      minX = Math.min(minX, r.left);
-      minY = Math.min(minY, r.top);
-      maxX = Math.max(maxX, r.right);
-      maxY = Math.max(maxY, r.bottom);
-    });
-    if (isFinite(minX)) return { x: (minX + maxX) / 2, y: (minY + maxY) / 2 };
+    const c = screenCenterOfPaths(paths);
+    if (c) return c;
   }
   const circle = countryCircles[id];
   if (circle) {
@@ -903,9 +1008,17 @@ function getCountryScreenCenter(id) {
   return null;
 }
 
+function getTerritoryScreenCenter(iso, territory) {
+  const paths = pathTerritory[iso]?.[territory];
+  if (!paths || paths.length === 0) return null;
+  return screenCenterOfPaths(paths);
+}
+
 function updateInfoPanel() {
   if (!infoPanelId) return;
-  const cc = getCountryScreenCenter(infoPanelId);
+  const cc = infoPanelMode === 'territory' && infoPanelTerritory
+    ? getTerritoryScreenCenter(infoPanelId, infoPanelTerritory)
+    : getCountryScreenCenter(infoPanelId);
   if (!cc) return;
 
   const panelW  = infoPanelEl.offsetWidth  || 180;
@@ -1336,27 +1449,77 @@ function resetGameIdle() {
 
 // ─── Learning mode ────────────────────────────────────────────────────────────
 
-function handleLearningClick(clickedId) {
+function selectTerritory(iso, territory) {
+  if (selectedId) unhighlight(selectedId, 'learning-selected');
+  selectedId = iso;
+  hideAllCircles();
+  highlight(iso, 'learning-selected');
+  showTerritoryPanel(iso, territory);
+  selectListRow(iso);
+  centerOnTerritory(iso, territory);
+}
+
+function centerOnTerritory(iso, territory) {
+  const paths = pathTerritory[iso]?.[territory];
+  if (!paths || paths.length === 0) return;
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  paths.forEach(p => {
+    try {
+      const bb = p.getBBox();
+      if (bb.width === 0 && bb.height === 0) return;
+      minX = Math.min(minX, bb.x); minY = Math.min(minY, bb.y);
+      maxX = Math.max(maxX, bb.x + bb.width); maxY = Math.max(maxY, bb.y + bb.height);
+    } catch (_) {}
+  });
+  if (!isFinite(minX)) return;
+  vb.x = (minX + maxX) / 2 - vb.w / 2;
+  vb.y = (minY + maxY) / 2 - vb.h / 2;
+  applyViewBox();
+}
+
+function handleLearningClick(clickedId, pathEl) {
   const country = countryById[clickedId];
   if (!country) return;
 
-  hideAllCircles();
-  if (selectedId) unhighlight(selectedId, 'learning-selected');
+  const territory = pathEl?.getAttribute?.('data-territory');
+  const isNamed   = territory && territory !== 'main'
+    && country.type_territoire === 'continental';
 
-  if (selectedId === clickedId) {
+  hideAllCircles();
+
+  // Déterminer si c'est le même état qu'actuellement (toggle off)
+  const sameState = selectedId === clickedId && (
+    isNamed
+      ? infoPanelMode === 'territory' && infoPanelTerritory === territory
+      : infoPanelMode === 'country'
+  );
+
+  if (sameState) {
+    unhighlight(selectedId, 'learning-selected');
     selectedId = null;
     hideInfoPanel();
     deselectListRow();
-  } else {
-    selectedId = clickedId;
-    highlight(clickedId, 'learning-selected');
-    showInfoPanel(country);
-    selectListRow(clickedId);
+    return;
   }
+
+  if (selectedId) unhighlight(selectedId, 'learning-selected');
+  selectedId = clickedId;
+  highlight(clickedId, 'learning-selected');
+
+  if (isNamed) {
+    showTerritoryPanel(clickedId, territory);
+  } else {
+    showInfoPanel(country);
+  }
+  selectListRow(clickedId);
 }
 
 function centerOnCountry(id) {
-  const paths = countryPaths[id];
+  const country = countryById[id];
+  // Pays continental : centrer sur le path principal
+  const paths = (country?.type_territoire === 'continental' && pathTerritory[id]?.main)
+    ? pathTerritory[id].main
+    : countryPaths[id];
   let cx, cy;
 
   if (paths && paths.length > 0) {
@@ -1395,7 +1558,7 @@ function selectFromList(id) {
   hideAllCircles();
   if (selectedId) unhighlight(selectedId, 'learning-selected');
 
-  if (selectedId === id) {
+  if (selectedId === id && infoPanelMode === 'country') {
     selectedId = null;
     hideInfoPanel();
     deselectListRow();
@@ -1403,12 +1566,8 @@ function selectFromList(id) {
     selectedId = id;
     highlight(id, 'learning-selected');
     showCircle(id);
-    infoPanelId = id;
     const country = countryById[id];
-    document.getElementById('cip-name').textContent    = country.nom;
-    document.getElementById('cip-capital').textContent = 'Capitale : ' + country.capitale;
-    document.getElementById('cip-pop').textContent     = formatPop(country.population);
-    infoPanelEl.classList.remove('hidden');
+    showInfoPanel(country);
     centerOnCountry(id);
     selectListRow(id);
   }
@@ -1423,9 +1582,10 @@ function onPathClick(e) {
     const dy = e.clientY - mouseDownPos.y;
     if (Math.abs(dx) > 5 || Math.abs(dy) > 5) return;
   }
-  const id = e.currentTarget.dataset.countryId;
+  const pathEl = e.currentTarget;
+  const id     = pathEl.dataset.countryId;
   if (mode === 'game') handleGameClick(id);
-  else                 handleLearningClick(id);
+  else                 handleLearningClick(id, pathEl);
 }
 
 // ─── Small-country markers ────────────────────────────────────────────────────
@@ -1796,5 +1956,13 @@ if (window.innerWidth <= 900) {
 } else {
   splashEl.addEventListener('animationend', () => { splashEl.style.display = 'none'; });
 }
+
+// ─── CLASSIF TOOL BRIDGE — retirer avec classification-tool.js ───────────────
+window._classifBridge = {
+  getCountryPaths: () => countryPaths,
+  getCountryById:  () => countryById,
+  centerOn(svgX, svgY) { vb.x = svgX - vb.w / 2; vb.y = svgY - vb.h / 2; applyViewBox(); },
+};
+// ─────────────────────────────────────────────────────────────────────────────
 
 init();

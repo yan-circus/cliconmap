@@ -199,6 +199,14 @@ body.game-running #user-area         { display: none; }
 #header-setup-right { display: flex; align-items: center; gap: 6px; }
 #lives { display: none; color: var(--wrong); letter-spacing: 4px; font-size: 2.5rem; }
 
+/* CLASSIF TOOL — retirer avec classification-tool.js */
+#classif-btn {
+  font-size: 0.72rem; padding: 3px 8px; cursor: pointer;
+  background: var(--accent); color: var(--text);
+  border: 1px solid var(--text-dim); border-radius: 4px; white-space: nowrap;
+}
+#classif-btn:hover { opacity: 0.8; }
+
 /* ── Bouton fermer (mobile uniquement) ── */
 #close-btn {
   display: none;
@@ -404,7 +412,7 @@ body[data-theme="multi"]  #question .q-details { color: #cad4df; }
   padding: 10px 14px;
   min-width: 150px;
   max-width: 220px;
-  pointer-events: none;
+  pointer-events: auto;
   box-shadow: 0 4px 20px rgba(0,0,0,0.55);
 }
 #country-info-panel.hidden { display: none; }
@@ -420,6 +428,54 @@ body[data-theme="multi"]  #question .q-details { color: #cad4df; }
   color: var(--text-dim);
   margin-top: 2px;
 }
+
+#cip-expand-btn {
+  margin-top: 6px;
+  background: none;
+  border: 1px solid var(--text-dim);
+  color: var(--text-dim);
+  border-radius: 3px;
+  padding: 1px 7px;
+  cursor: pointer;
+  font-size: 0.88rem;
+}
+#cip-expand-btn:hover { color: var(--text); border-color: var(--text); }
+#cip-expand-btn.hidden { display: none; }
+
+#cip-territories {
+  margin-top: 6px;
+  flex-direction: column;
+  gap: 4px;
+}
+.cip-territory-item {
+  background: none;
+  border: none;
+  color: var(--selected-fill);
+  cursor: pointer;
+  text-align: left;
+  padding: 1px 0;
+  font-size: 0.85rem;
+  text-decoration: underline;
+}
+.cip-territory-item:hover { opacity: 0.75; }
+
+#cip-territory-view { flex-direction: column; gap: 5px; }
+#cip-territory-name {
+  font-size: 1rem;
+  font-weight: bold;
+  color: var(--hover-fill);
+}
+#cip-belongs-to { font-size: 0.82rem; color: var(--text-dim); }
+#cip-parent-btn {
+  background: none;
+  border: none;
+  color: var(--selected-fill);
+  cursor: pointer;
+  font-size: 0.82rem;
+  text-decoration: underline;
+  padding: 0;
+}
+#cip-parent-btn:hover { opacity: 0.75; }
 
 /* ── Game over overlay ── */
 #gameover-overlay {

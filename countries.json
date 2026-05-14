@@ -63,7 +63,8 @@
     "is_EU": false,
     "continents": [
       "Afrique"
-    ]
+    ],
+    "type_territoire": "continental"
   },
   {
     "id": "AG",
@@ -74,7 +75,8 @@
     "is_EU": false,
     "continents": [
       "Amérique"
-    ]
+    ],
+    "type_territoire": "archipel"
   },
   {
     "id": "AR",
@@ -85,7 +87,8 @@
     "is_EU": false,
     "continents": [
       "Amérique"
-    ]
+    ],
+    "type_territoire": "continental"
   },
   {
     "id": "AT",
@@ -107,7 +110,8 @@
     "is_EU": false,
     "continents": [
       "Océanie"
-    ]
+    ],
+    "type_territoire": "continental"
   },
   {
     "id": "AW",
@@ -129,7 +133,8 @@
     "is_EU": false,
     "continents": [
       "Asie"
-    ]
+    ],
+    "type_territoire": "continental"
   },
   {
     "id": "BA",
@@ -294,7 +299,8 @@
     "is_EU": false,
     "continents": [
       "Amérique"
-    ]
+    ],
+    "type_territoire": "archipel"
   },
   {
     "id": "BT",
@@ -349,7 +355,8 @@
     "is_EU": false,
     "continents": [
       "Amérique"
-    ]
+    ],
+    "type_territoire": "archipel"
   },
   {
     "id": "CD",
@@ -415,7 +422,8 @@
     "is_EU": false,
     "continents": [
       "Amérique"
-    ]
+    ],
+    "type_territoire": "continental"
   },
   {
     "id": "CM",
@@ -437,7 +445,8 @@
     "is_EU": false,
     "continents": [
       "Asie"
-    ]
+    ],
+    "type_territoire": "continental"
   },
   {
     "id": "CO",
@@ -481,7 +490,8 @@
     "is_EU": false,
     "continents": [
       "Afrique"
-    ]
+    ],
+    "type_territoire": "archipel"
   },
   {
     "id": "CW",
@@ -503,7 +513,8 @@
     "is_EU": true,
     "continents": [
       "Europe"
-    ]
+    ],
+    "type_territoire": "archipel"
   },
   {
     "id": "CZ",
@@ -547,7 +558,8 @@
     "is_EU": true,
     "continents": [
       "Europe"
-    ]
+    ],
+    "type_territoire": "archipel"
   },
   {
     "id": "DM",
@@ -647,7 +659,8 @@
     "is_EU": true,
     "continents": [
       "Europe"
-    ]
+    ],
+    "type_territoire": "continental"
   },
   {
     "id": "ET",
@@ -680,7 +693,8 @@
     "is_EU": false,
     "continents": [
       "Océanie"
-    ]
+    ],
+    "type_territoire": "archipel"
   },
   {
     "id": "FM",
@@ -691,7 +705,8 @@
     "is_EU": false,
     "continents": [
       "Océanie"
-    ]
+    ],
+    "type_territoire": "archipel"
   },
   {
     "id": "FR",
@@ -702,7 +717,8 @@
     "is_EU": true,
     "continents": [
       "Europe"
-    ]
+    ],
+    "type_territoire": "continental"
   },
   {
     "id": "GA",
@@ -724,7 +740,8 @@
     "is_EU": false,
     "continents": [
       "Europe"
-    ]
+    ],
+    "type_territoire": "continental"
   },
   {
     "id": "GD",
@@ -823,7 +840,8 @@
     "is_EU": true,
     "continents": [
       "Europe"
-    ]
+    ],
+    "type_territoire": "continental"
   },
   {
     "id": "GT",
@@ -923,7 +941,8 @@
     "continents": [
       "Asie",
       "Océanie"
-    ]
+    ],
+    "type_territoire": "archipel"
   },
   {
     "id": "IE",
@@ -1000,7 +1019,8 @@
     "is_EU": true,
     "continents": [
       "Europe"
-    ]
+    ],
+    "type_territoire": "continental"
   },
   {
     "id": "JM",
@@ -1033,7 +1053,8 @@
     "is_EU": false,
     "continents": [
       "Asie"
-    ]
+    ],
+    "type_territoire": "archipel"
   },
   {
     "id": "KE",
@@ -1077,7 +1098,8 @@
     "is_EU": false,
     "continents": [
       "Afrique"
-    ]
+    ],
+    "type_territoire": "archipel"
   },
   {
     "id": "KN",
@@ -1088,7 +1110,8 @@
     "is_EU": false,
     "continents": [
       "Amérique"
-    ]
+    ],
+    "type_territoire": "archipel"
   },
   {
     "id": "KP",
@@ -1397,7 +1420,8 @@
     "is_EU": true,
     "continents": [
       "Europe"
-    ]
+    ],
+    "type_territoire": "archipel"
   },
   {
     "id": "MU",
@@ -1408,7 +1432,8 @@
     "is_EU": false,
     "continents": [
       "Afrique"
-    ]
+    ],
+    "type_territoire": "archipel"
   },
   {
     "id": "MV",
@@ -1452,7 +1477,8 @@
     "is_EU": false,
     "continents": [
       "Asie"
-    ]
+    ],
+    "type_territoire": "continental"
   },
   {
     "id": "MZ",
@@ -1529,7 +1555,8 @@
     "is_EU": false,
     "continents": [
       "Europe"
-    ]
+    ],
+    "type_territoire": "continental"
   },
   {
     "id": "NP",
@@ -1562,7 +1589,8 @@
     "is_EU": false,
     "continents": [
       "Océanie"
-    ]
+    ],
+    "type_territoire": "archipel"
   },
   {
     "id": "OM",
@@ -1573,7 +1601,8 @@
     "is_EU": false,
     "continents": [
       "Asie"
-    ]
+    ],
+    "type_territoire": "continental"
   },
   {
     "id": "PA",
@@ -1606,7 +1635,8 @@
     "is_EU": false,
     "continents": [
       "Océanie"
-    ]
+    ],
+    "type_territoire": "archipel"
   },
   {
     "id": "PH",
@@ -1617,7 +1647,8 @@
     "is_EU": false,
     "continents": [
       "Asie"
-    ]
+    ],
+    "type_territoire": "archipel"
   },
   {
     "id": "PK",
@@ -1739,7 +1770,8 @@
     "continents": [
       "Europe",
       "Asie"
-    ]
+    ],
+    "type_territoire": "continental"
   },
   {
     "id": "RW",
@@ -1772,7 +1804,8 @@
     "is_EU": false,
     "continents": [
       "Océanie"
-    ]
+    ],
+    "type_territoire": "archipel"
   },
   {
     "id": "SC",
@@ -1783,7 +1816,8 @@
     "is_EU": false,
     "continents": [
       "Afrique"
-    ]
+    ],
+    "type_territoire": "archipel"
   },
   {
     "id": "SD",
@@ -1893,7 +1927,8 @@
     "is_EU": false,
     "continents": [
       "Afrique"
-    ]
+    ],
+    "type_territoire": "archipel"
   },
   {
     "id": "SV",
@@ -2025,7 +2060,8 @@
     "is_EU": false,
     "continents": [
       "Océanie"
-    ]
+    ],
+    "type_territoire": "archipel"
   },
   {
     "id": "TR",
@@ -2037,7 +2073,8 @@
     "continents": [
       "Europe",
       "Asie"
-    ]
+    ],
+    "type_territoire": "archipel"
   },
   {
     "id": "TT",
@@ -2048,7 +2085,8 @@
     "is_EU": false,
     "continents": [
       "Amérique"
-    ]
+    ],
+    "type_territoire": "archipel"
   },
   {
     "id": "TV",
@@ -2114,7 +2152,8 @@
     "is_EU": false,
     "continents": [
       "Amérique"
-    ]
+    ],
+    "type_territoire": "continental"
   },
   {
     "id": "UY",
@@ -2191,7 +2230,8 @@
     "is_EU": false,
     "continents": [
       "Océanie"
-    ]
+    ],
+    "type_territoire": "archipel"
   },
   {
     "id": "WS",
@@ -2202,7 +2242,8 @@
     "is_EU": false,
     "continents": [
       "Océanie"
-    ]
+    ],
+    "type_territoire": "archipel"
   },
   {
     "id": "XK",
