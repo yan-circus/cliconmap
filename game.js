@@ -1646,9 +1646,12 @@ function hideAllCircles() {
 function renderList() {
   const pool   = getCountriesForLevel();
   const sorted = [...pool].sort((a, b) => {
-    let va = a[sortCol], vb = b[sortCol];
-    if (typeof va === 'string') va = va.toLowerCase();
-    if (typeof vb === 'string') vb = vb.toLowerCase();
+    const va = a[sortCol], vb = b[sortCol];
+    if (typeof va === 'string') {
+      return sortDir === 'asc'
+        ? va.localeCompare(vb, 'fr', { sensitivity: 'base' })
+        : vb.localeCompare(va, 'fr', { sensitivity: 'base' });
+    }
     if (va < vb) return sortDir === 'asc' ? -1 :  1;
     if (va > vb) return sortDir === 'asc' ?  1 : -1;
     return 0;
