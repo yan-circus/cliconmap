@@ -1957,12 +1957,5 @@ if (window.innerWidth <= 900) {
   splashEl.addEventListener('animationend', () => { splashEl.style.display = 'none'; });
 }
 
-// ─── CLASSIF TOOL BRIDGE — retirer avec classification-tool.js ───────────────
-window._classifBridge = {
-  getCountryPaths: () => countryPaths,
-  getCountryById:  () => countryById,
-  centerOn(svgX, svgY) { vb.x = svgX - vb.w / 2; vb.y = svgY - vb.h / 2; applyViewBox(); },
-};
-// ─────────────────────────────────────────────────────────────────────────────
 
 init();

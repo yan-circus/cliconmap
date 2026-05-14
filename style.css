@@ -199,13 +199,6 @@ body.game-running #user-area         { display: none; }
 #header-setup-right { display: flex; align-items: center; gap: 6px; }
 #lives { display: none; color: var(--wrong); letter-spacing: 4px; font-size: 2.5rem; }
 
-/* CLASSIF TOOL — retirer avec classification-tool.js */
-#classif-btn {
-  font-size: 0.72rem; padding: 3px 8px; cursor: pointer;
-  background: var(--accent); color: var(--text);
-  border: 1px solid var(--text-dim); border-radius: 4px; white-space: nowrap;
-}
-#classif-btn:hover { opacity: 0.8; }
 
 /* ── Bouton fermer (mobile uniquement) ── */
 #close-btn {

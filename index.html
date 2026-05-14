@@ -50,9 +50,6 @@
             <option value="Amérique">Amérique</option>
             <option value="Océanie">Océanie</option>
           </select>
-          <!-- CLASSIF TOOL START -->
-          <button id="classif-btn" title="Outil de classification multi-paths">⚙ Classif.</button>
-          <!-- CLASSIF TOOL END -->
         </div>
         <div id="header-game-left">
           <span id="score">0 pts</span>
@@ -166,38 +163,6 @@
           <tbody id="list-body"></tbody>
         </table>
       </div>
-
-      <!-- CLASSIF TOOL START -->
-      <div id="classif-panel" class="hidden">
-        <div id="classif-main-view">
-          <div id="classif-head">
-            <span id="classif-counter"></span>
-            <span id="classif-country-name"></span>
-            <button id="classif-close" title="Fermer l'outil">✕</button>
-          </div>
-          <select id="classif-type">
-            <option value="continental">Territoire principal + nommés</option>
-            <option value="archipel">Archipel</option>
-          </select>
-          <table id="classif-table">
-            <thead>
-              <tr>
-                <th>Chemin</th>
-                <th>Principal</th>
-                <th>Nom du territoire</th>
-              </tr>
-            </thead>
-            <tbody id="classif-tbody"></tbody>
-          </table>
-          <button id="classif-validate">Valider →</button>
-        </div>
-        <div id="classif-done-view" style="display:none">
-          <p>✓ Classification terminée !</p>
-          <p id="classif-done-count"></p>
-          <button id="classif-download">⬇ Télécharger data4classification.json</button>
-        </div>
-      </div>
-      <!-- CLASSIF TOOL END -->
 
       <div id="gameover-overlay" class="hidden">
         <div id="gameover-panel">
@@ -473,8 +438,5 @@
   <script src="https://www.gstatic.com/firebasejs/10.7.2/firebase-firestore-compat.js"></script>
   <script src="firebase-service.js"></script>
   <script src="game.js"></script>
-  <!-- CLASSIF TOOL START -->
-  <script src="classification-tool.js"></script>
-  <!-- CLASSIF TOOL END -->
 </body>
 </html>
