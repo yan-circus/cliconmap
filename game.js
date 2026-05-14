@@ -1,6 +1,6 @@
 // ─── Version ─────────────────────────────────────────────────────────────────
 
-const APP_VERSION = { hash: '5d7e939', date: '2026-05-14', time: '21:51', msg: 'Mode apprentissage : gestion des pays multi-paths' };
+const APP_VERSION = { hash: 'c72a4a1', date: '2026-05-14', time: '21:53', msg: 'Suppression de l'outil de classification multi-paths' };
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
