@@ -1,6 +1,6 @@
 // ─── Version ─────────────────────────────────────────────────────────────────
 
-const APP_VERSION = { hash: 'aae77cc', date: '2026-05-12', time: '21:02', msg: 'Dev panel : affichage hash version (APP_VERSION)' };
+const APP_VERSION = { hash: '5d7e939', date: '2026-05-14', time: '21:51', msg: 'Mode apprentissage : gestion des pays multi-paths' };
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
